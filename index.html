@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Campus Add 来館予約</title>
+<meta name="description" content="Campus Addの来館予約。相談もスペース使用も、LINEからかんたんに予約できます。">
+<meta property="og:title" content="Campus Add 来館予約">
+<meta property="og:description" content="Campus Addの来館予約。相談もスペース使用も、LINEからかんたんに予約できます。">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://campusadd.github.io/visit/favicon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* 新しいWEBサイト（2026年10月 リニューアル版）の見た目に合わせる：
+   クリーム地にうっすら木目、水色のラベル＋黄色い星、薄茶の番号（01 02）、角の大きく丸い写真、緑のボタン */
+:root{
+  --bg:#fbf8f1; --surface:#ffffff; --soft:#f3eee3; --ink:#333333; --muted:#6f6a62; --line:#e7e0d2;
+  --blue:#2f6db0; --blue-soft:#e1ecf5; --star:#f2b705; --num:#b4936a;
+  --accent:#16a06d; --accent-ink:#ffffff; --mark-soft:#fff3c7; --mark-ink:#7a5600;
+  --ok:#128a5d; --ok-soft:#e2f4ec; --ok-line:#bfe6d4; --few:#a86400; --few-soft:#fff0d4; --few-line:#f3d9a8; --danger:#c62828; --danger-soft:#fdeaea;
+  --grain:rgba(0,0,0,.035);
+  --f-body:"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
+  --f-num:"Josefin Sans","Noto Sans JP",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17150f; --surface:#211e17; --soft:#2a261d; --ink:#f1ede4; --muted:#b3ab9c; --line:#3a3428;
+  --blue:#8dbbe8; --blue-soft:#1f2c3a; --star:#f5c430; --num:#d2b48a;
+  --accent:#3fc48f; --accent-ink:#0b1f16; --mark-soft:#3a3016; --mark-ink:#f8dc8a;
+  --ok:#4fd39d; --ok-soft:#173327; --ok-line:#25553f; --few:#f2b45a; --few-soft:#3a2a12; --few-line:#5a4220; --danger:#ff8a80; --danger-soft:#3a1c1c;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#17150f; --surface:#211e17; --soft:#2a261d; --ink:#f1ede4; --muted:#b3ab9c; --line:#3a3428;
+  --blue:#8dbbe8; --blue-soft:#1f2c3a; --star:#f5c430; --num:#d2b48a;
+  --accent:#3fc48f; --accent-ink:#0b1f16; --mark-soft:#3a3016; --mark-ink:#f8dc8a;
+  --ok:#4fd39d; --ok-soft:#173327; --ok-line:#25553f; --few:#f2b45a; --few-soft:#3a2a12; --few-line:#5a4220; --danger:#ff8a80; --danger-soft:#3a1c1c;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--bg)}
+/* WEBサイトの背景の木目を、細い波線でうっすら再現 */
+body{margin:0;color:var(--ink);font-family:var(--f-body);font-size:15px;font-weight:400;line-height:1.8;letter-spacing:.03em;-webkit-font-smoothing:antialiased;
+  background-color:var(--bg);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='240' viewBox='0 0 120 240'%3E%3Cpath d='M20 0c10 40-10 80 0 120s-10 80 0 120M70 0c-8 50 12 70 2 120s10 70-2 120M105 0c6 30-8 60 0 90s8 90-2 150' fill='none' stroke='%23000' stroke-opacity='.035' stroke-width='1.4'/%3E%3C/svg%3E")}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px 72px}
+h1,h2,h3{margin:0;line-height:1.4;text-wrap:balance;font-weight:500;letter-spacing:.12em}
+a{color:var(--blue)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--star);outline-offset:2px;border-radius:6px}
+
+.bar{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+.brand{width:150px;height:26px;overflow:hidden;display:block}
+.brand img{display:block;width:185px;height:61px;max-width:none;margin:-17px 0 0 -17px}
+.label{display:inline-flex;align-items:center;gap:6px;background:var(--blue-soft);color:var(--blue);border-radius:999px;padding:3px 12px 3px 10px;font-size:11px;font-weight:700;letter-spacing:.06em;justify-self:start}
+.label::before{content:"";width:11px;height:11px;background:var(--star);clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%)}
+.hero{display:grid;gap:12px;padding:10px 0 4px}
+.hero h1{font-size:30px}
+.hero p{margin:0;color:var(--muted);font-size:14px}
+.info{display:flex;flex-wrap:wrap;gap:6px}
+.info span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:12px;color:var(--muted)}
+.info b{color:var(--ink);font-weight:700}
+/* 写真は、WEBサイトと同じく角を大きく丸めた形に */
+.photo{display:block;width:100%;height:auto;object-fit:cover;border-radius:110px 28px 120px 36px / 70px 24px 90px 30px}
+.hero .photo{aspect-ratio:21/9;margin-top:6px;object-position:center 35%}
+.testbar{background:var(--mark-soft);color:var(--mark-ink);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;text-align:center}
+.me{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px 10px 16px;font-size:14px;margin-top:14px}
+.me b{font-size:15px;font-weight:700}
+.linkbtn{border:1.5px solid var(--blue);background:transparent;color:var(--blue);border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.linkbtn .n{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:999px;background:var(--blue);color:var(--surface);font-size:11px;margin-left:6px;padding:0 5px}
+
+.step{display:grid;gap:4px;margin:34px 0 14px}
+.step .no{font-family:var(--f-num);font-weight:300;font-size:30px;line-height:1;color:var(--num);letter-spacing:.04em}
+.step h2{font-size:21px}
+.kinds{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kind{position:relative;display:block;cursor:pointer}
+.kind input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.kind > div{position:relative;height:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:18px;overflow:hidden;display:grid;align-content:start}
+.kind img{display:block;width:100%;height:auto;aspect-ratio:2/1;object-fit:cover}
+.kind .tx{padding:10px 12px 12px;display:grid;gap:3px}
+.kind b{font-size:15px;font-weight:700;letter-spacing:.06em}
+.kind small{font-size:12px;color:var(--muted);line-height:1.6}
+.kind input:checked+div{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+
+.kind input:focus-visible+div{outline:3px solid var(--star);outline-offset:2px}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin:-4px 0 12px}
+.legend i{font-style:normal;font-weight:700;margin-right:3px}
+.days{display:grid;gap:12px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 14px 12px;display:grid;gap:10px}
+.dh{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.dh b{font-size:16px;font-weight:700;letter-spacing:.06em}
+.dh .sum{font-size:11px;font-weight:700;border-radius:999px;padding:1px 10px}
+.day .staff{font-size:12px;color:var(--muted);margin-top:-6px}
+.same{display:flex;align-items:flex-start;gap:8px;font-size:14px;cursor:pointer}
+.same input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)}
+.sum.ok{background:var(--ok-soft);color:var(--ok)}
+.sum.few{background:var(--few-soft);color:var(--few)}
+.sum.full{background:var(--danger-soft);color:var(--danger)}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:6px 4px;display:grid;justify-items:center;cursor:pointer;line-height:1.35}
+.chip .t{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:16px;font-weight:400;letter-spacing:.02em}
+.chip .s{font-size:11px;font-weight:700}
+.chip.ok{border-color:var(--ok-line);background:var(--ok-soft)}
+.chip.ok .s{color:var(--ok)}
+.chip.few{border-color:var(--few-line);background:var(--few-soft)}
+.chip.few .s{color:var(--few)}
+.chip:hover:not([disabled]){border-color:var(--accent)}
+.chip[disabled]{cursor:default;background:transparent;border-style:dashed}
+.chip[disabled] .t,.chip[disabled] .s{color:var(--muted)}
+.limitnote{background:var(--mark-soft);color:var(--mark-ink);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;line-height:1.6}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:16px;padding:18px 16px;color:var(--muted);font-size:14px;text-align:center}
+.notice{background:var(--danger-soft);color:var(--danger);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;margin-top:14px}
+
+.back{display:inline-flex;align-items:center;gap:6px;border:none;background:none;color:var(--blue);font-weight:700;cursor:pointer;padding:16px 0 8px}
+.pick{background:var(--surface);border:1.5px solid var(--accent);border-radius:18px;padding:14px 18px;display:grid;gap:2px}
+.pick .k{font-size:12px;font-weight:700;color:var(--ok);letter-spacing:.06em}
+.pick .d{font-size:21px;font-weight:700;letter-spacing:.04em}
+.pick .x{font-size:12px;color:var(--muted);line-height:1.7;margin-top:2px}
+.form{display:grid;gap:12px;margin-top:16px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 16px;display:grid;gap:8px;margin:0;min-width:0}
+.q.bad{border-color:var(--danger)}
+.ql{font-weight:700;font-size:14px}
+.req,.opt{font-size:10px;font-weight:700;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.req{background:var(--mark-soft);color:var(--mark-ink)}
+.opt{background:var(--soft);color:var(--muted)}
+.qh{font-size:12px;color:var(--muted);margin:-4px 0 0}
+.qe{color:var(--danger);font-size:12px;font-weight:700;margin:0}
+.q input[type="text"],.q input[type="tel"],.q textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.q textarea{min-height:80px;resize:vertical}
+.grads{display:flex;flex-wrap:wrap;gap:6px}
+.grads label{position:relative;cursor:pointer}
+.grads input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.grads span{display:block;border:1px solid var(--line);border-radius:999px;padding:6px 16px;font-size:14px;background:var(--bg)}
+.grads input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.grads input:focus-visible+span{outline:3px solid var(--star);outline-offset:2px}
+.sec{font-size:13px;font-weight:700;color:var(--muted);margin:4px 0 -2px}
+.rules{margin:0;padding:0 0 0 1.1em;font-size:12px;color:var(--muted);display:grid;gap:4px}
+.agree{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;cursor:pointer}
+.agree input{width:20px;height:20px;accent-color:var(--accent)}
+.privacy{margin:0;font-size:12px;color:var(--muted);white-space:pre-line;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-height:200px;overflow:auto}
+/* WEBサイトと同じ、緑の丸いボタン＋矢印 */
+.cta{display:flex;justify-content:center;align-items:center;gap:8px;width:100%;border:none;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:16px;letter-spacing:.06em;padding:15px 22px;cursor:pointer;text-decoration:none}
+.cta::after{content:"→"}
+.cta:hover{filter:brightness(1.06)}
+.cta[disabled]{opacity:.6;cursor:wait}
+.cta.ghost{background:transparent;color:var(--blue);border:1.5px solid var(--blue)}
+.errbox{background:var(--danger-soft);color:var(--danger);border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700}
+
+.done{display:grid;gap:16px;padding:18px 0}
+.done .photo{aspect-ratio:21/9}
+.dline{background:var(--mark-soft);color:var(--mark-ink);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;line-height:1.7}
+.dline a{color:inherit}
+.done h2{font-size:24px}
+.done p{margin:0;font-size:14px;color:var(--muted)}
+.done .cta{max-width:340px;justify-self:center}
+.list{display:grid;gap:10px}
+.rsv{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 16px}
+.rsv b{display:block;font-size:16px;font-weight:700}
+.rsv small{color:var(--muted);font-size:12px}
+.rsv .today{max-width:52%;font-size:12px;font-weight:700;color:var(--mark-ink);background:var(--mark-soft);border-radius:10px;padding:6px 10px;line-height:1.5}
+.rsv button{border:1.5px solid var(--danger);background:transparent;color:var(--danger);border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.loading{color:var(--muted);text-align:center;padding:30px 0;font-size:14px}
+.hist{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:6px 16px}
+.histsum{margin:8px 0 4px;font-size:13px;color:var(--muted)}
+.histsum b{font-family:var(--f-num);font-weight:400;font-size:22px;color:var(--ok);margin:0 2px}
+.hrow{display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}
+.hd{display:grid;line-height:1.2}
+.hd b{font-family:var(--f-num);font-weight:400;font-size:18px}
+.hd small{font-size:11px;color:var(--muted)}
+.hk{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.hkind{font-size:12px;font-weight:700;margin-right:4px}
+.htopic{font-size:11px;font-weight:700;background:var(--ok-soft);color:var(--ok);border-radius:999px;padding:1px 9px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* ---- 見た目の作り込み（WEBサイトの雰囲気のまま、少しだけ華やかに） ---- */
+.hero{position:relative;padding:4px 0 0;gap:0}
+.hero-photo{position:relative}
+.hero-photo .photo{aspect-ratio:2/1;margin:0;object-position:center 35%}
+.blob{position:absolute;border-radius:50%;pointer-events:none}
+.blob.b1{width:64px;height:64px;background:var(--star);opacity:.9;top:-14px;right:22px}
+.blob.b2{width:22px;height:22px;background:var(--blue);opacity:.85;top:30px;right:6px}
+.blob.b3{width:120px;height:120px;border:1.5px solid var(--num);opacity:.45;bottom:-30px;left:-34px}
+.hero-card{position:relative;margin:-38px 14px 0;background:var(--surface);border-radius:22px;padding:20px 20px 18px;display:grid;gap:10px;box-shadow:0 14px 34px -20px rgba(60,40,10,.45)}
+.hero-card .kicker{margin:0;display:flex;align-items:center;gap:8px;font-family:var(--f-num);font-weight:400;font-size:12px;letter-spacing:.32em;color:var(--blue)}
+.hero-card .kicker::before{content:"";width:12px;height:12px;background:var(--star);clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%)}
+.hero-card .kicker::after{content:"";flex:1;height:1px;background:var(--line)}
+.hero-card .lead{margin:0;color:var(--muted);font-size:13px;line-height:1.8}
+.keyfacts{display:grid;grid-template-columns:1fr 1fr;margin:4px 0 0;border-top:1px solid var(--line)}
+.keyfacts div{padding:10px 0 0}
+.keyfacts div+div{border-left:1px solid var(--line);padding-left:16px}
+.keyfacts dt{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em}
+.keyfacts dd{margin:0;font-family:var(--f-num);font-weight:400;font-size:24px;line-height:1.2;color:var(--ink);letter-spacing:.02em}
+.keyfacts dd span{color:var(--ink)}
+.keyfacts dd > span:first-child{margin:0 2px;color:var(--muted)}
+.keyfacts dd small{font-family:var(--f-body);font-size:12px;font-weight:700;color:var(--muted);margin-right:4px}
+.hero-card h1{font-size:23px;font-weight:700;letter-spacing:.1em;line-height:1.55}
+.hero-card .kicker .ja{font-family:var(--f-body);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted);margin-left:-2px}
+.step{position:relative}
+.step .bgword{position:absolute;right:0;bottom:-2px;font-family:var(--f-num);font-weight:300;font-size:54px;line-height:1;letter-spacing:.06em;color:var(--line);pointer-events:none;user-select:none}
+.step .no,.step h2{position:relative}
+.kind > div{transition:transform .2s ease, box-shadow .2s ease}
+.kind:hover > div{transform:translateY(-2px);box-shadow:0 10px 24px -16px rgba(60,40,10,.4)}
+.kind .ph::before{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.18),transparent 55%);z-index:1;pointer-events:none}
+.kind .ph::after{z-index:2}
+/* 日付：チケットのように、左に大きな日付 */
+.day{grid-template-columns:56px 1fr;column-gap:12px;align-items:start}
+.dnum{display:grid;justify-items:center;line-height:1.1;padding:2px 10px 4px 0;border-right:1px dashed var(--line);align-self:stretch;align-content:start}
+.dnum .m{font-size:11px;color:var(--muted)}
+.dnum .d{font-family:var(--f-num);font-weight:300;font-size:34px;line-height:1.05;color:var(--ink)}
+.dnum .w{font-size:11px;font-weight:700;color:var(--muted)}
+.dnum.sat .w{color:var(--blue)}
+.dbody{display:grid;gap:8px;min-width:0}
+.dbody .dh{align-items:flex-start}
+.dh .sum{white-space:nowrap;flex:none}
+.dbody .staff{margin:0;font-size:12px;color:var(--muted)}
+.closenote{margin:0;justify-self:start;font-size:12px;font-weight:700;color:var(--mark-ink);background:var(--mark-soft);border-radius:8px;padding:2px 10px}
+/* スクロールで、ふわっと出す */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .5s ease, transform .5s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+/* フッター */
+.foot{margin-top:46px;padding:22px 0 8px;border-top:1px solid var(--line);display:grid;gap:10px;justify-items:center;text-align:center}
+.foot .brand{width:150px;height:26px}
+.foot nav{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;font-size:12px}
+.foot nav a{color:var(--muted);text-decoration:none}
+.foot nav a:hover{color:var(--blue);text-decoration:underline}
+.foot small{font-size:11px;color:var(--muted);letter-spacing:.04em}
+/* アクセス・連絡先（WEBサイトのアクセスページの内容） */
+.acc,.contact{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:14px}
+.contact{margin-top:12px;gap:8px}
+.contact p{margin:0;font-size:13px;color:var(--muted)}
+.contact small{font-size:11px;color:var(--muted)}
+.acc .photo{aspect-ratio:16/9}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:13px}
+.facts dt{color:var(--muted);font-size:12px;font-weight:700;padding-top:1px}
+.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.facts dd small{display:block;font-size:11px;color:var(--muted)}
+.facts a{font-weight:700}
+.route{margin:0;padding:0;list-style:none;counter-reset:r;display:grid;gap:8px}
+.route li{counter-increment:r;display:grid;grid-template-columns:34px 1fr;column-gap:8px;font-size:12px;color:var(--muted)}
+.route li::before{content:counter(r,decimal-leading-zero);grid-row:span 2;font-family:var(--f-num);font-weight:300;font-size:22px;line-height:1.2;color:var(--num)}
+.route li b{color:var(--ink);font-size:13px}
+.acc .cta{padding:11px 18px;font-size:14px}
+/* 「選択中」の札は写真の左下に重ねる（顔にかからないように） */
+.kind .ph{position:relative;display:block}
+.kind input:checked+div .ph::after{content:"✓ 選択中";position:absolute;left:8px;bottom:8px;font-size:11px;font-weight:700;white-space:nowrap;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 10px;letter-spacing:.04em;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.refask{display:grid;gap:8px;background:var(--mark-soft);color:var(--mark-ink);border-radius:16px;padding:14px 16px;margin-top:14px}
+.refask b{font-size:15px}
+.refask small{font-size:12px}
+.refask .cta{background:var(--surface);color:var(--ok);border:1.5px solid var(--accent);padding:10px 18px;font-size:14px}
+.levels{display:grid;gap:6px}
+.levels label{position:relative;cursor:pointer}
+.levels input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.levels span{display:block;border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-size:14px;background:var(--bg)}
+.levels input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.levels input:focus-visible+span{outline:3px solid var(--star);outline-offset:2px}
+@media (max-width:380px){ .kinds{grid-template-columns:1fr} .chips{gap:4px} .chip .t{font-size:14px} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar"><span class="brand"><img src="campus-add-logo.png" alt="Campus Add" width="300" height="98"></span></div>
+  <div class="testbar" id="testbar" hidden></div>
+
+  <!-- 1. 予約する（使い方 → 日時） -->
+  <main id="v-home">
+    <header class="hero">
+      <div class="hero-photo">
+        <img class="photo" src="photo-welcome.jpg" alt="Campus Addのスタッフが、来館した学生を迎えている様子" width="1200" height="800">
+        <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+      </div>
+      <div class="hero-card">
+        <p class="kicker">RESERVATION<span class="ja">／ 来館予約</span></p>
+        <h1>授業や選考の合間を、<br>就活の時間に。</h1>
+        <p class="lead">ESも面接も、進路の迷いも。話すと、次の一歩が見えてきます。<br>相談のあとは、閉館まで滞在して作業を続けられます。</p>
+        <dl class="keyfacts">
+          <div><dt>開館時間</dt><dd>13:00<span>–</span>17:00</dd></div>
+          <div><dt>予約の締切</dt><dd><small>前日</small><span id="dl">15:00</span></dd></div>
+        </dl>
+      </div>
+    </header>
+    <div class="me" id="me" hidden><span id="meText"></span><button class="linkbtn" type="button" id="toMine">予約・来館の記録<span class="n" id="mineN" hidden></span></button></div>
+    <div class="notice" id="notice" hidden></div>
+    <div class="refask" id="refAsk" hidden></div>
+
+    <div class="step"><span class="bgword" aria-hidden="true">CHOOSE</span><span class="no">01</span><h2>使い方を選ぶ</h2></div>
+    <div class="kinds" role="radiogroup" aria-label="使い方">
+      <label class="kind"><input type="radio" name="kind" value="相談" checked><div><span class="ph"><img src="photo-consult.jpg" alt="" width="800" height="533" loading="lazy"></span><div class="tx"><b>キャンアドで相談</b><small>ES添削・面接練習・進路相談など（目安30分）。相談のあとも閉館まで滞在できます</small></div></div></label>
+      <label class="kind"><input type="radio" name="kind" value="場所利用"><div><span class="ph"><img src="photo-seat.jpg" alt="" width="800" height="533" loading="lazy"></span><div class="tx"><b>スペース使用</b><small>ES作成や企業研究、選考や説明会前後の時間潰しなどで、館内に滞在できます</small></div></div></label>
+    </div>
+
+    <div class="step"><span class="bgword" aria-hidden="true">SCHEDULE</span><span class="no">02</span><h2 id="step2">空いている時間を選ぶ</h2></div>
+    <div class="legend" id="legend"></div>
+    <div class="days" id="days"><div class="loading">空き状況を読み込んでいます…</div></div>
+
+    <div class="step"><span class="bgword" aria-hidden="true">ACCESS</span><span class="no">03</span><h2>アクセス</h2></div>
+    <div class="acc reveal">
+      <img class="photo" src="photo-access.jpg" alt="Campus Addが入っているアイパスビルの外観" width="800" height="450" loading="lazy">
+      <dl class="facts">
+        <dt>住所</dt><dd>〒060-0051<br>北海道札幌市中央区南1条東3丁目10-13 アイパスビル3F</dd>
+        <dt>最寄り駅</dt><dd>地下鉄東西線「バスセンター前駅」6番出口から徒歩約2分<small>大通方面からは、地下道を通って近くまで来られます</small></dd>
+      </dl>
+      <ol class="route">
+        <li><b>6番出口を出る</b>地下鉄東西線「バスセンター前駅」6番出口から地上へ出ます。</li>
+        <li><b>Campus Add方面へ</b>さっぽろテレビ塔を目の前に、角を左へ約100m進みます。</li>
+        <li><b>建物を確認</b>アイパスビルに到着。Campus Addの白い旗が目印です。</li>
+        <li><b>3階へ</b>建物に入り、階段で3階までお越しください。</li>
+      </ol>
+      <a class="cta ghost" href="https://www.google.com/maps/search/?api=1&amp;query=%E6%9C%AD%E5%B9%8C%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA%E5%8D%971%E6%9D%A1%E6%9D%B13%E4%B8%81%E7%9B%AE10-13%20%E3%82%A2%E3%82%A4%E3%83%91%E3%82%B9%E3%83%93%E3%83%AB" target="_blank" rel="noopener">Google Mapで見る</a>
+    </div>
+    <div class="contact reveal">
+      <span class="label">CONTACT</span>
+      <p>予約の変更や当日の遅れ・キャンセルは、Campus Addの公式LINEでご連絡ください。</p>
+      <dl class="facts">
+        <dt>電話</dt><dd><a href="tel:0115771396">011-577-1396</a></dd>
+        <dt>メール</dt><dd><a href="mailto:info@sejapan.jp">info@sejapan.jp</a></dd>
+      </dl>
+      <small>運営：株式会社エス・イー・ジャパン</small>
+    </div>
+  </main>
+
+  <!-- 2. 確認・入力 -->
+  <main id="v-confirm" hidden>
+    <button class="back" type="button" id="cBack">← 日時を選び直す</button>
+    <div class="pick" id="cPick"></div>
+    <div id="sameBox" style="margin-top:10px"></div>
+    <form class="form" id="cForm" novalidate>
+      <div id="topics"></div>
+      <div id="profile"></div>
+      <div class="q"><label class="ql" for="memo">連絡事項<span class="opt">任意</span></label><p class="qh">遅れて来る可能性など、スタッフに伝えておきたいことがあれば書いてください。</p><textarea id="memo" maxlength="500"></textarea></div>
+      <div class="q" id="f-agree">
+        <!-- data-k のある行は、選んだ使い方（相談／場所利用）のときだけ出す -->
+        <ul class="rules" id="rules">
+          <li data-k="相談">予約は「来館する時間」の予約です。相談時間の目安は30分間です。相談のあとも、閉館（<span class="cl">17:00</span>）まで滞在して作業を続けられます。アドバイザーの手が空いていれば続けて相談できることもあるので、気軽に声をかけてください。</li>
+          <li data-k="場所利用">予約は「来館する時間」の予約です。閉館（<span class="cl">17:00</span>）まで滞在できます。</li>
+          <li data-k="相談">相談のあとは、振り返りシートへの入力をお願いしています（スマホで1分ほど）。</li>
+          <li>友達と一緒に来たい場合や、遅れる可能性がある場合は、事前にCampus Addの公式LINEでご相談ください。</li>
+          <li data-k="相談">相談の内容や来館人数によって、お待ちいただく場合があります。</li>
+          <li data-k="場所利用">来館人数によって、お待ちいただく場合があります。</li>
+          <li>当サービスは、民間企業への就職を希望する方のサポートが中心です。</li>
+          <li>キャンセルは、前日までならこのページの「予約の確認」からできます。利用日当日のキャンセルや来館が遅くなる場合は、LINEでご連絡ください。</li>
+        </ul>
+        <label class="agree"><input type="checkbox" id="agree">上記を確認しました</label>
+        <p class="qe" hidden></p>
+      </div>
+      <div class="errbox" id="cErr" hidden></div>
+      <button class="cta" type="submit" id="cSend">この内容で予約する</button>
+    </form>
+  </main>
+
+  <!-- 3. 予約完了 -->
+  <main id="v-done" hidden>
+    <div class="done">
+      <span class="label">THANK YOU</span>
+      <h2>予約が確定しました</h2>
+      <div class="pick" id="dPick"></div>
+      <p class="dline" id="dLine" hidden></p>
+      <img class="photo" src="photo-done.jpg" alt="Campus Addのテーブルに置かれたWelcomeの飾り" width="800" height="533" loading="lazy">
+      <p>当日は、予約した時間にCampus Addへお越しください。<br>キャンセルは、前日までならこのページの「予約の確認」からできます。<br>利用日当日のキャンセルや来館が遅くなる場合は、LINEでご連絡ください。</p>
+      <button class="cta ghost" type="button" id="dHome">続けて別の日も予約する</button>
+    </div>
+  </main>
+
+  <!-- 5. 振り返り -->
+  <main id="v-reflect" hidden>
+    <button class="back" type="button" id="rBack">← 予約の画面へ</button>
+    <div class="done" style="padding-top:0">
+      <span class="label">REFLECTION</span>
+      <h2>今日の振り返り</h2>
+      <div class="pick" id="rPick"></div>
+    </div>
+    <form class="form" id="rForm" novalidate></form>
+    <div class="done" id="rDone" hidden>
+      <h2>ありがとうございました</h2>
+      <p>振り返りを受け付けました。次の来館でも、続きから一緒に進めましょう。</p>
+      <button class="cta ghost" type="button" id="rHome">予約の画面へ</button>
+    </div>
+  </main>
+
+  <!-- 4. 予約の確認・キャンセル -->
+  <main id="v-mine" hidden>
+    <button class="back" type="button" id="mBack">← 予約の画面へ</button>
+    <div class="step" style="margin-top:6px"><h2>これからの予約</h2></div>
+    <div class="list" id="mList"></div>
+    <div class="step"><span class="bgword" aria-hidden="true">HISTORY</span><h2>これまでの来館</h2></div>
+    <div class="hist" id="mHist"></div>
+  </main>
+  <footer class="foot">
+    <span class="brand"><img src="campus-add-logo.png" alt="Campus Add" width="300" height="98"></span>
+    <nav><a href="https://www.campus-add.com/" target="_blank" rel="noopener">Campus Add WEBサイト</a><a href="https://www.campus-add.com/privacy-policy" target="_blank" rel="noopener">プライバシーポリシー</a><a href="https://lin.ee/wpTDw7N" target="_blank" rel="noopener">公式LINE</a></nav>
+    <small>© 2026 Campus Add ／ 株式会社エス・イー・ジャパン</small>
+  </footer>
+</div>
+
+<script src="config.js"></script>
+<script>
+const CONFIG = Object.assign({apiUrl:"", lineUrl:"", liffId:""}, window.VISIT_CONFIG || {});
+const $ = s => document.querySelector(s);
+const el = (tag, props={}, kids=[]) => { const n=document.createElement(tag); Object.assign(n, props); for(const k of [].concat(kids)) if(k!=null) n.append(k); return n; };
+const WD = "日月火水木金土";
+const GRADS = ["28卒","29卒","30卒","その他"];
+// 相談で選んでもらう項目（管理表のスクリプトの TOPICS と同じ）
+const TOPICS = ["ES作成","面接練習","自己分析","企業・業界研究","進路相談","就活の進め方全般"];
+// 個人情報の取り扱い（初回登録のときだけ同意をもらう）
+const PRIVACY = "株式会社エス・イー・ジャパン【Campus Add】（以下、当社）は、ご入力いただいた個人情報を次の目的で利用します。\n1. 来館予約の受付と、予約に関するご連絡\n2. 相談内容・振り返りの記録と、スタッフ間での引き継ぎ（より良い相談のため）\n3. 当社（Campus Add）からの、就職活動に関する講座・イベント・個別相談のご案内\n\nなお、予約ページではLINEログインを利用し、LINEのユーザー識別子を予約情報とひもづけて管理します。\n\n法令に基づく場合を除き、ご本人の同意なく第三者へ提供することはありません。協賛企業などへ情報を提供する場合は、その都度、提供する内容と提供先をお知らせし、ご本人の同意をいただいたうえで行います。\n\n【お問い合わせ窓口】株式会社エス・イー・ジャパン\nTEL：011-577-1396　MAIL：info@sejapan.jp\nプライバシーポリシー：https://www.campus-add.com/privacy-policy";
+
+// ---- 利用者の見分け方 ----
+// LINEから開いた人（liffId あり）：LINEのIDトークンを受付係に渡し、受付係がLINEに確かめる
+// liffId が空のとき：この端末を1人として扱う（テスト版）
+function deviceUid(){
+  let id=null;
+  try{ id=localStorage.getItem("ca.visit.uid"); }catch(e){}
+  if(!id){
+    const a=new Uint8Array(12); crypto.getRandomValues(a);
+    id="t_"+[...a].map(b=>b.toString(36).padStart(2,"0")).join("").slice(0,24);
+    try{ localStorage.setItem("ca.visit.uid", id); }catch(e){}
+  }
+  return id;
+}
+let UID = "", ID_TOKEN = "", FRIEND = null;
+const who = () => ID_TOKEN ? {idToken:ID_TOKEN} : {uid:UID||(UID=deviceUid())};
+
+// LINEにログインして、IDトークンをもらう。ログイン画面へ移るときは false
+function loadScript(src){ return new Promise((ok,ng)=>{ const s=document.createElement("script"); s.src=src; s.charset="utf-8"; s.onload=ok; s.onerror=ng; document.head.append(s); }); }
+async function startLine(){
+  if(!CONFIG.liffId || DEMO || !CONFIG.apiUrl) return true;
+  await loadScript("https://static.line-scdn.net/liff/edge/2/sdk.js");
+  await liff.init({liffId:CONFIG.liffId});
+  if(!liff.isLoggedIn()){ liff.login({redirectUri:location.href}); return false; }
+  ID_TOKEN = liff.getIDToken() || "";
+  if(!ID_TOKEN) throw new Error("no id token");
+  try{ FRIEND = (await liff.getFriendship()).friendFlag; }catch(e){}
+  return true;
+}
+// LINEでの確認の期限が切れたとき：開き直して新しいトークンをもらう（何度も繰り返さないよう、1分に1回まで）
+function relogin(){
+  let last=0; try{ last=+sessionStorage.getItem("ca.visit.relogin")||0; }catch(e){}
+  if(Date.now()-last<60e3 || !window.liff) return false;
+  try{ sessionStorage.setItem("ca.visit.relogin", String(Date.now())); }catch(e){}
+  if(liff.isInClient()){ location.reload(); return true; }
+  try{ liff.logout(); }catch(e){}
+  liff.login({redirectUri:location.href});
+  return true;
+}
+
+// ---- 受付係（管理表のスクリプト）とのやり取り。URLが空のときは、仮のデータで動くお試しモード ----
+// アドレスの最後に ?demo=1 を付けると、管理表につながず仮のデータで動く（スマホで画面を試す用）
+// ?demo=1：初めての学生として、?demo=2：2回目以降の学生（前回の担当・振り返り・来館の記録あり）として開く
+const DEMO = /[?&]demo=[12](?!\d)/.test(location.search);
+const DEMO_RETURNING = /[?&]demo=2(?!\d)/.test(location.search);
+const API = CONFIG.apiUrl && !DEMO ? {
+  get: q => fetch(CONFIG.apiUrl+"?"+new URLSearchParams(q),{cache:"no-store"}).then(r=>r.json()),
+  post: b => fetch(CONFIG.apiUrl,{method:"POST",body:JSON.stringify(b)}).then(r=>r.json()).then(r=>{ if(r && r.relogin && relogin()) return new Promise(()=>{}); return r; })
+} : demoApi();
+
+function demoApi(){
+  const pad=n=>String(n).padStart(2,"0"), ymd=d=>`${d.getUTCFullYear()}/${pad(d.getUTCMonth()+1)}/${pad(d.getUTCDate())}`;
+  const times=["13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30"];
+  const jst=new Date(Date.now()+9*3600e3), start=new Date(Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate()));
+  const days=[], rsv=[]; let user=DEMO_RETURNING?{name:"テスト 花子"}:null, seed=7, reflected=false;
+  const rnd=()=>(seed=(seed*9301+49297)%233280)/233280;
+  for(let i=1;i<=28;i++){
+    const d=new Date(start.getTime()+i*864e5), w=d.getUTCDay();
+    if(w===0||w===6||rnd()<.12) continue; // 土日と、ときどき休館
+    if(i===1 && jst.getUTCHours()>=15) continue; // 前日15時の締切を過ぎた明日
+    const cap=2, staff=rnd()<.3?"亀田・非常勤アドバイザー":"赤坂・亀田", away=days.length===1, early=days.length===2; // 2日目は「亀田 15:00-16:00 不在」、3日目は「16:30閉館」の例
+    days.push({date:ymd(d), w:WD[w], staff, note:away?"亀田は15:00〜16:00不在":"", consult:times.map(t=>{ const out=away&&(t==="15:00"||t==="15:30"); const c=out?1:cap; const used=Math.min(c, rnd()<.35?Math.floor(rnd()*3):0); if(early && t==="16:30") return {time:t,cap:0,left:0,staff}; return {time:t,cap:c,left:c-used,staff:out?staff.replace(/・?亀田・?/,""):staff}; }), place:{cap:4,left:Math.floor(rnd()*5)}, close:early?"16:30":"", closeNote:early?"この日は16:30閉館です":"", placeLast:early?"15:30":"16:00"});
+  }
+  const ok=x=>new Promise(r=>setTimeout(()=>r(x),250));
+  return {
+    get: q => q.action==="me" ? ok({ok:true,registered:!!user,name:user?user.name:"",reservations:rsv.filter(r=>r.active),history:user?[{date:"2026/10/19",time:"13:00",kind:"相談",topic1:"面接練習",topic2:"ES作成"},{date:"2026/10/12",time:"14:30",kind:"相談",topic1:"ES作成",topic2:"面接練習"},{date:"2026/10/05",time:"15:00",kind:"場所利用"}]:[],visits:user?3:0,lastStaff:user?"亀田":"",reflect:user&&!reflected?[{id:"demo",date:days[0].date,time:"13:00",topic1:"ES作成",topic2:"面接練習"}]:[]}) : ok({ok:true,days,times,deadline:"15:00",demo:true}),
+    post: b => {
+      if(b.action==="reflect"){ reflected=true; return ok({ok:true}); }
+      if(b.action==="cancel"){ const r=rsv.find(x=>x.id===b.id); if(r){ r.active=false; const d=days.find(x=>x.date===r.date); if(r.kind==="相談") d.consult.find(s=>s.time===r.time).left++; else d.place.left++; } return ok({ok:true}); }
+      const d=days.find(x=>x.date===b.date); if(!d) return ok({ok:false,error:"この日は予約を受け付けていません。"});
+      if(rsv.some(r=>r.active && r.date===b.date)) return ok({ok:false,error:"この日はすでに予約があります。時間を変えたいときは、いまの予約をキャンセルしてから予約し直してください。"});
+      const s=b.kind==="相談" ? d.consult.find(x=>x.time===b.time) : d.place;
+      if(!s || s.left<1) return ok({ok:false,full:true,error:"ちょうど満席になりました。別の時間を選んでください。"});
+      if(!user){ if(!b.profile) return ok({ok:false,needProfile:true,error:"初回のみ、お名前などの入力が必要です。"}); user=b.profile; }
+      s.left--; const r={id:"R"+Date.now(),date:b.date,time:b.time,kind:b.kind,active:true}; rsv.push(r);
+      return ok({ok:true,reservation:r,name:user.name});
+    }
+  };
+}
+
+// ---- 状態 ----
+let DATA=null, ME={registered:false,name:"",reservations:[]}, PICK=null, sending=false;
+const kind = () => (document.querySelector('input[name="kind"]:checked')||{}).value || "相談";
+const toMin=t=>{ const [h,m]=String(t).split(":").map(Number); return h*60+m; };
+function dateLabel(date, w){ const [,m,d]=date.split("/").map(Number); return `${m}月${d}日（${w}）`; }
+function wOf(date){ const [y,m,d]=date.split("/").map(Number); return WD[new Date(Date.UTC(y,m-1,d)).getUTCDay()]; }
+
+function show(view){
+  ["home","confirm","done","mine","reflect"].forEach(v=>{ $("#v-"+v).hidden = v!==view; });
+  window.scrollTo(0,0);
+}
+
+// ---- 1. 空き状況 ----
+function renderLegend(){
+  const k=kind();
+  $("#step2").textContent = k==="相談" ? "空いている時間を選ぶ" : "来館する日と時間を選ぶ";
+  $("#legend").replaceChildren(...(k==="相談"
+    ? [el("span",{},[el("i",{textContent:"◎",style:"color:var(--ok)"}),"空きあり"]), el("span",{},[el("i",{textContent:"△",style:"color:var(--few)"}),"残り1"]), el("span",{},[el("i",{textContent:"×"}),"満席・受付なし"])]
+    : [el("span",{textContent:"スペース使用は1日あたりの人数で受け付けています。来館する時間を選んでください（最終入場は閉館の1時間前です）。"})]));
+}
+function renderDays(){
+  renderLegend();
+  const box=$("#days");
+  if(!DATA){ return; }
+  const k=kind();
+  const list=DATA.days.filter(d => k==="相談" ? d.consult.some(s=>s.cap>0) : d.place.cap>0);
+  if(!list.length){ box.replaceChildren(el("div",{className:"empty",textContent:"いま予約できる日はありません。次の日程が決まるまでお待ちください。"})); return; }
+  // 相談は、これからの予約を同時に consultLimit 件まで。上限のときは先に知らせて、時間を選べないようにする
+  const limit=DATA.consultLimit||0, mine=(ME.reservations||[]).filter(r=>r.kind==="相談").length;
+  const blocked = k==="相談" && limit>0 && mine>=limit;
+  box.replaceChildren(blocked ? el("div",{className:"limitnote",textContent:`相談の予約は、同時に${limit}件までです。いま${mine}件入っています。1件終わるか、キャンセルすると次の予約ができます。`}) : "", ...list.map(d=>{
+    let sum, chips;
+    if(k==="相談"){
+      const open=d.consult.reduce((n,s)=>n+s.left,0);
+      // 日ごとの空きは数を出さず、ことばで見せる（「空き16」だとがら空きに見えるため）
+      sum = open===0 ? el("span",{className:"sum full",textContent:"満席"}) : el("span",{className:"sum "+(open<=3?"few":"ok"),textContent:open<=3?"残りわずか":"空きあり"});
+      chips=d.consult.map(s=>{
+        const st = s.left>=2 ? "ok" : s.left===1 ? "few" : "";
+        const b=el("button",{type:"button",className:"chip "+st,disabled:s.left<1||blocked},[el("span",{className:"t",textContent:s.time}), el("span",{className:"s",textContent: s.cap<1 ? "受付なし" : s.left>=2 ? "◎" : s.left===1 ? "△ 残り1" : "× 満席"})]);
+        b.setAttribute("aria-label", dateLabel(d.date,d.w)+" "+s.time+" "+(s.left>0?"空き"+s.left:"満席"));
+        if(s.left>0 && !blocked) b.onclick=()=>pick(d, s.time);
+        return b;
+      });
+    }else{
+      const left=d.place.left;
+      sum = left<1 ? el("span",{className:"sum full",textContent:"満席"}) : el("span",{className:"sum "+(left<=2?"few":"ok"),textContent:left<=2?"残りわずか":"空きあり"});
+      chips=DATA.times.filter(t=>toMin(t)<=toMin(d.placeLast||"16:00")).map(t=>{ // 最終入場（ふだんは16:00）まで
+        const b=el("button",{type:"button",className:"chip "+(left>0?"ok":""),disabled:left<1},[el("span",{className:"t",textContent:t}), el("span",{className:"s",textContent:left>0?"来館":"× 満席"})]);
+        b.setAttribute("aria-label", dateLabel(d.date,d.w)+" "+t+" に来館");
+        if(left>0) b.onclick=()=>pick(d, t);
+        return b;
+      });
+    }
+    const [,mm,dd]=d.date.split("/").map(Number);
+    const card=el("div",{className:"day reveal"},[
+      el("div",{className:"dnum"+(d.w==="土"?" sat":""),"aria-hidden":"true"},[el("span",{className:"m",textContent:mm+"月"}),el("span",{className:"d",textContent:dd}),el("span",{className:"w",textContent:d.w+"曜"})]),
+      el("div",{className:"dbody"},[
+        el("div",{className:"dh"},[el("p",{className:"staff"},[el("span",{className:"sr",textContent:dateLabel(d.date,d.w)+" "}), k==="相談" && d.staff?"担当："+d.staff+(d.note?`（${d.note}）`:""):""]), sum]), // スペース使用では担当を出さない
+        d.closeNote ? el("p",{className:"closenote",textContent:d.closeNote}) : null,
+        el("div",{className:"chips"},chips)
+      ])
+    ]);
+    return card;
+  }));
+}
+document.querySelectorAll('input[name="kind"]').forEach(r=>r.addEventListener("change",()=>{ renderDays(); reveal(); }));
+
+// ---- 5. 振り返り（相談した日のあと） ----
+const SOLVED = ["解決した","少し進んだ","まだ解決していない"];
+const LEVELS = ["とても上がった（次にやるべき行動が明確になった）","やや上がった（ある程度整理できた）","どちらともいえない","あまり上がらなかった（まだ整理しきれていない）"];
+let REF=null;
+function renderRefAsk(){
+  const list=ME.reflect||[], box=$("#refAsk");
+  box.hidden=!list.length;
+  box.replaceChildren(...list.map(r=>el("div",{style:"display:grid;gap:8px"},[
+    el("b",{textContent:`${dateLabel(r.date,wOf(r.date))} ${r.time} の振り返りをお願いします`}),
+    el("small",{textContent:"相談のあとの振り返りです。スマホで1分ほどで終わります。"}),
+    Object.assign(el("button",{type:"button",className:"cta",textContent:"振り返りを入力する"}),{onclick:()=>openReflect(r)})
+  ])));
+}
+function choiceQ(id,label,list,cls){
+  return el("div",{className:"q",id:"f-"+id},[el("span",{className:"ql"},[label,el("span",{className:"req",textContent:"必須"})]),
+    el("div",{className:cls},list.map((t,i)=>el("label",{},[el("input",{type:"radio",name:id,value:t,id:id+"-"+i}),el("span",{textContent:t})]))), el("p",{className:"qe",hidden:true})]);
+}
+function textQ(id,label,help,ph){
+  return el("div",{className:"q",id:"f-"+id},[el("label",{className:"ql",htmlFor:id},[label,el("span",{className:"req",textContent:"必須"})]), help?el("p",{className:"qh",textContent:help}):null,
+    el("textarea",{id,maxLength:1000,placeholder:ph||"",style:"min-height:72px"}), el("p",{className:"qe",hidden:true})]);
+}
+function openReflect(r){
+  REF=r;
+  $("#rPick").replaceChildren(el("span",{className:"k",textContent:"キャンアドで相談"}), el("span",{className:"d",textContent:dateLabel(r.date,wOf(r.date))+" "+r.time}),
+    el("span",{className:"x",textContent:"予約のときに選んだ相談内容をもとに、振り返ります"}));
+  const f=$("#rForm");
+  f.replaceChildren(
+    r.topic1 ? choiceQ("solved1",`最も解決したかった「${r.topic1}」は、どのくらい解決しましたか？`,SOLVED,"grads") : null,
+    r.topic2 ? choiceQ("solved2",`2番目に解決したかった「${r.topic2}」は、どのくらい解決しましたか？`,SOLVED,"grads") : null,
+    choiceQ("level","本日の相談を通じて、ご自身の課題や今後の方向性の「解像度」はどのくらい上がりましたか？",LEVELS,"levels"),
+    textQ("reason","上で答えた理由や、特に印象に残っている点を教えてください",""),
+    textQ("today","本日の振り返り（一言でOK）","今日来てよかったこと・話せてよかったこと","例）志望動機の軸について話せて、自分の強みをどう活かすかが少し見えてきた"),
+    textQ("next","今日からやること・やりたいと思うこと",""),
+    el("div",{className:"errbox",id:"rErr",hidden:true}),
+    el("button",{type:"submit",className:"cta",id:"rSend",textContent:"振り返りを送る"})
+  );
+  f.hidden=false; $("#rDone").hidden=true;
+  show("reflect");
+}
+$("#rForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  if(sending || !REF) return;
+  const pickv=n=>{ const x=document.querySelector(`input[name="${n}"]:checked`); return x?x.value:""; };
+  const v={solved1:pickv("solved1"), solved2:pickv("solved2"), level:pickv("level"), reason:val("reason"), today:val("today"), next:val("next")};
+  let good=true;
+  const chk=(id,ok,msg)=>{ if(!$("#f-"+id)) return; setBad("f-"+id, ok?"":msg); if(!ok) good=false; };
+  chk("solved1",!!v.solved1,"選んでください。"); chk("solved2",!!v.solved2,"選んでください。"); chk("level",!!v.level,"選んでください。");
+  chk("reason",!!v.reason,"入力してください。"); chk("today",!!v.today,"入力してください。"); chk("next",!!v.next,"入力してください。");
+  if(!good){ const bad=document.querySelector("#rForm .q.bad"); if(bad) bad.scrollIntoView({behavior:"smooth",block:"center"}); return; }
+  const btn=$("#rSend"), err=$("#rErr"); sending=true; btn.disabled=true; btn.textContent="送っています…"; err.hidden=true;
+  try{
+    const r=await API.post({action:"reflect", ...who(), id:REF.id, ...v});
+    if(!r.ok) throw new Error(r.error);
+    $("#rForm").hidden=true; $("#rDone").hidden=false; window.scrollTo(0,0);
+    load();
+  }catch(x){
+    err.textContent=x.message||"送信できませんでした。電波の良いところで、もう一度送ってください。"; err.hidden=false;
+  }finally{
+    sending=false; btn.disabled=false; btn.textContent="振り返りを送る";
+  }
+});
+$("#rBack").onclick=()=>show("home");
+$("#rHome").onclick=()=>show("home");
+
+// スクロールして見えてきたカードを、ふわっと出す
+const IO = "IntersectionObserver" in window ? new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); IO.unobserve(e.target); } }),{rootMargin:"0px 0px -30px 0px"}) : null;
+function reveal(root){ (root||document).querySelectorAll(".reveal:not(.in)").forEach(n=>{ if(IO) IO.observe(n); else n.classList.add("in"); }); }
+
+function renderMe(){
+  const n=ME.reservations.length;
+  $("#me").hidden = !ME.registered && !n && !(ME.history||[]).length;
+  $("#meText").replaceChildren(...(ME.registered ? [el("b",{textContent:ME.name}),"さん"] : ["予約があります"]));
+  $("#mineN").hidden=!n; $("#mineN").textContent=n;
+}
+
+function load(){
+  return Promise.all([API.get({action:"slots"}), (ID_TOKEN ? API.post({action:"me",...who()}) : API.get({action:"me",...who()}))]).then(([s,m])=>{
+    if(!s.ok) throw new Error(s.error);
+    DATA=s; if(m && m.ok) ME=m;
+    $("#dl").textContent=s.deadline||"15:00";
+    const tb=$("#testbar");
+    if(s.demo){ tb.textContent="お試しモード：仮のデータで動いています。予約しても実際には登録されません。"; tb.hidden=false; }
+    else if(s.test){ tb.textContent=ID_TOKEN?"テスト版：LINEのアカウントで本人を確認しています（スタッフの試し用）":"テスト版：この端末を1人の利用者として扱っています"; tb.hidden=false; }
+    $("#notice").hidden=true;
+    renderMe(); renderRefAsk(); renderDays(); reveal();
+  }).catch(err=>{
+    const n=$("#notice"); n.textContent="空き状況を読み込めませんでした。電波の良いところで、ページを開き直してください。"; n.hidden=false;
+    $("#days").replaceChildren();
+  });
+}
+
+// ---- 2. 確認・入力 ----
+function pickText(p){
+  return [el("span",{className:"k",textContent:p.kind==="相談"?"キャンアドで相談":"スペース使用"}), el("span",{className:"d",textContent:dateLabel(p.date,p.w)+" "+p.time}), el("span",{className:"x",textContent:p.kind==="相談"?"相談時間の目安は30分間です。相談のあとも、閉館（"+(p.close||"17:00")+"）まで滞在して作業を続けられます。アドバイザーの手が空いていれば続けて相談できることもあるので、気軽に声をかけてください。":"来館する時間です。閉館（"+(p.close||"17:00")+"）まで滞在できます"}), p.closeNote ? el("span",{className:"x closenote",textContent:p.closeNote}) : null, p.kind==="相談" && p.staff ? el("span",{className:"x",textContent:"この時間の担当："+p.staff}) : null].filter(Boolean);
+}
+function field(id,label,{type="text",ph="",help="",mode=""}={}){
+  const inp=el("input",{type,id,placeholder:ph,maxLength:60}); if(mode) inp.inputMode=mode;
+  return el("div",{className:"q",id:"f-"+id},[el("label",{className:"ql",htmlFor:id},[label,el("span",{className:"req",textContent:"必須"})]), help?el("p",{className:"qh",textContent:help}):null, inp, el("p",{className:"qe",hidden:true})]);
+}
+function renderProfile(){
+  const box=$("#profile");
+  if(ME.registered){ box.replaceChildren(el("div",{className:"q"},[el("span",{className:"ql",textContent:"予約する人"}), el("span",{textContent:ME.name+" さん"})])); return; }
+  box.replaceChildren(
+    el("p",{className:"sec",textContent:"はじめての方は、次の内容を入力してください（2回目からは入力不要です）"}),
+    field("p-name","お名前",{ph:"例）北海 太郎"}),
+    field("p-kana","ふりがな",{ph:"例）ほっかい たろう"}),
+    field("p-tel","電話番号",{type:"tel",ph:"例）09012345678",mode:"tel",help:"ハイフンなしの数字だけで入力できます"}),
+    field("p-univ","大学名",{ph:"例）○○大学"}),
+    field("p-dept","学部・学科",{ph:"例）経済学部 経済学科"}),
+    el("div",{className:"q",id:"f-p-grad"},[el("span",{className:"ql"},["卒業予定",el("span",{className:"req",textContent:"必須"})]),
+      el("div",{className:"grads"},GRADS.map((g,i)=>el("label",{},[el("input",{type:"radio",name:"grad",value:g,id:"g"+i}),el("span",{textContent:g})]))), el("p",{className:"qe",hidden:true})]),
+    el("div",{className:"q",id:"f-p-visited"},[el("span",{className:"ql"},["Campus Addに来館したことはありますか？",el("span",{className:"req",textContent:"必須"})]),
+      el("div",{className:"grads"},["はい","いいえ"].map((g,i)=>el("label",{},[el("input",{type:"radio",name:"visited",value:g,id:"vs"+i}),el("span",{textContent:g})]))), el("p",{className:"qe",hidden:true})]),
+    // 個人情報の取り扱い（初回登録のときだけ）
+    el("div",{className:"q",id:"f-p-consent"},[el("span",{className:"ql"},["個人情報の取り扱いについて",el("span",{className:"req",textContent:"必須"})]),
+      el("p",{className:"privacy",textContent:PRIVACY}),
+      el("label",{className:"agree"},[el("input",{type:"checkbox",id:"consent"}),"上記に同意する"]), el("p",{className:"qe",hidden:true})])
+  );
+}
+// 相談の予約だけ：最も解決したいこと・2番目に解決したいこと（それぞれ具体的な内容は任意）
+function topicField(no,label){
+  const name="topic"+no;
+  return el("div",{className:"q",id:"f-"+name},[
+    el("span",{className:"ql"},[label,el("span",{className:"req",textContent:"必須"})]),
+    el("div",{className:"grads"},TOPICS.map((t,i)=>el("label",{},[el("input",{type:"radio",name,value:t,id:name+"-"+i}),el("span",{textContent:t})]))),
+    el("label",{className:"qh",htmlFor:"detail"+no,textContent:"具体的に相談したいこと（任意）",style:"margin:2px 0 0"}),
+    el("textarea",{id:"detail"+no,maxLength:300,placeholder:no===1?"例）ガクチカがうまくまとまらない":"例）面接で緊張してしまう",style:"min-height:64px"}),
+    el("p",{className:"qe",hidden:true})
+  ]);
+}
+function renderTopics(){
+  const box=$("#topics");
+  if(PICK.kind!=="相談"){ box.replaceChildren(); $("#sameBox").replaceChildren(); return; }
+  const here = (PICK.staff||"").split("・");
+  // 前回が非常勤の方だと、開館日の担当の書き方（名前／非常勤アドバイザー）と一致しないことがあるので、その場合は判定しない
+  const absentNote = ME.lastStaff && ME.lastStaff !== "非常勤アドバイザー" && PICK.staff && !here.includes(ME.lastStaff) ? el("p",{className:"qh",style:"margin:0",textContent:`前回の担当（${ME.lastStaff}）は、この時間は担当していません。`}) : null;
+  // 同じ時間に、同じ担当への希望が先に入っているとき（先着順）
+  const takenNote = !absentNote && ME.lastStaff && (PICK.wanted||[]).includes(ME.lastStaff) ? el("p",{className:"qh",style:"margin:0",textContent:`この時間は、${ME.lastStaff}への担当希望がすでに入っています。${ME.lastStaff}の担当を希望する場合は、別の時間を選んでください。`}) : null;
+  const same = absentNote || takenNote || (ME.lastStaff ? el("div",{className:"q"},[el("label",{className:"same"},[el("input",{type:"checkbox",id:"sameStaff"}), el("span",{},[`前回の担当（${ME.lastStaff}）を希望する`, el("br"), el("small",{className:"qh",style:"margin:0",textContent:"任意です。できるだけ調整しますが、ご希望に沿えない場合もあります。"})])])]) : null);
+  box.replaceChildren(el("p",{className:"sec",textContent:"相談したいことを教えてください"}), topicField(1,"相談で最も解決したいこと"), topicField(2,"2番目に解決したいこと"));
+  // 担当の希望は、日時の枠（この時間の担当）のすぐ下に出す
+  $("#sameBox").replaceChildren(...[same].filter(Boolean));
+  box.style.display="grid"; box.style.gap="12px";
+}
+function readTopics(){
+  if(PICK.kind!=="相談") return {ok:true, v:{}};
+  const g=n=>{ const x=document.querySelector(`input[name="topic${n}"]:checked`); return x?x.value:""; };
+  const t1=g(1), t2=g(2);
+  setBad("f-topic1", t1?"":"選んでください。");
+  setBad("f-topic2", !t2?"選んでください。":t2===t1?"1番目と違う項目を選んでください。":"");
+  const ss=$("#sameStaff");
+  return {ok:!!t1 && !!t2 && t1!==t2, v:{topic1:t1, detail1:val("detail1"), topic2:t2, detail2:val("detail2"), sameStaff:!!(ss && ss.checked)}};
+}
+function pick(d,time){
+  const slot=(d.consult||[]).find(s=>s.time===time);
+  PICK={date:d.date, w:d.w, time, kind:kind(), staff: slot && slot.staff ? slot.staff : (d.staff||""), wanted: slot && slot.wanted ? slot.wanted : [], close:d.close||"", closeNote:d.closeNote||""};
+  $("#cPick").replaceChildren(...pickText(PICK));
+  document.querySelectorAll("#rules li[data-k]").forEach(li=>{ li.hidden = li.dataset.k!==PICK.kind; });
+  document.querySelectorAll("#rules .cl").forEach(x=>{ x.textContent = PICK.close||"17:00"; });
+  renderTopics();
+  renderProfile();
+  $("#cErr").hidden=true; $("#agree").checked=false; $("#memo").value="";
+  setBad("f-agree","");
+  show("confirm");
+}
+function setBad(id,msg){ const b=$("#"+id); if(!b) return; const e=b.querySelector(".qe"); e.textContent=msg; e.hidden=!msg; b.classList.toggle("bad",!!msg); }
+function val(id){ const n=$("#"+id); return n ? n.value.trim() : ""; }
+const normTel = v => v.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/\D/g,"");
+function readProfile(){
+  if(ME.registered) return {ok:true, profile:null};
+  let good=true;
+  const need=(id,msg)=>{ const v=val(id); setBad("f-"+id, v?"":msg); if(!v) good=false; return v; };
+  const p={name:need("p-name","入力してください。"), kana:need("p-kana","入力してください。"), tel:normTel(val("p-tel")), univ:need("p-univ","入力してください。"), dept:need("p-dept","入力してください。")};
+  if(!/^0\d{9,10}$/.test(p.tel)){ setBad("f-p-tel","電話番号を数字で入力してください（例：09012345678）。"); good=false; } else setBad("f-p-tel","");
+  const g=document.querySelector('input[name="grad"]:checked'); p.grad=g?g.value:"";
+  setBad("f-p-grad", p.grad?"":"選んでください。"); if(!p.grad) good=false;
+  const vs=document.querySelector('input[name="visited"]:checked'); p.visited=vs?vs.value:"";
+  setBad("f-p-visited", p.visited?"":"選んでください。"); if(!p.visited) good=false;
+  p.consent=$("#consent").checked; setBad("f-p-consent", p.consent?"":"同意していただくと予約できます。"); if(!p.consent) good=false;
+  return {ok:good, profile:p};
+}
+$("#cForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  if(sending || !PICK) return;
+  const tp=readTopics();
+  const pr=readProfile();
+  const agreed=$("#agree").checked; setBad("f-agree", agreed?"":"確認してチェックを入れてください。");
+  if(!tp.ok || !pr.ok || !agreed){ const bad=document.querySelector("#cForm .q.bad"); if(bad) bad.scrollIntoView({behavior:"smooth",block:"center"}); return; }
+  const btn=$("#cSend"), err=$("#cErr"); sending=true; btn.disabled=true; btn.textContent="予約しています…"; err.hidden=true;
+  try{
+    const r=await API.post({action:"reserve", ...who(), date:PICK.date, time:PICK.time, kind:PICK.kind, memo:$("#memo").value, profile:pr.profile, ...tp.v});
+    if(!r.ok){
+      if(r.needProfile){ ME.registered=false; renderProfile(); }
+      err.textContent=r.error||"予約できませんでした。"; err.hidden=false; err.scrollIntoView({behavior:"smooth",block:"center"});
+      if(r.full) load();
+      return;
+    }
+    ME.registered=true; if(r.name) ME.name=r.name;
+    $("#dPick").replaceChildren(...pickText(PICK));
+    renderDoneLine(r.notified);
+    show("done");
+    load();
+  }catch(x){
+    err.textContent="送信できませんでした。電波の良いところで、もう一度「この内容で予約する」を押してください。"; err.hidden=false;
+  }finally{
+    sending=false; btn.disabled=false; btn.textContent="この内容で予約する";
+  }
+});
+
+// 予約完了の画面：LINEに確認を送れたか／友だち追加の案内
+function renderDoneLine(notified){
+  const box=$("#dLine");
+  if(notified) box.replaceChildren("予約の確認をLINEに送りました。前日の15時ごろにも、LINEでお知らせします。");
+  else if(ID_TOKEN && FRIEND===false && CONFIG.lineUrl) box.replaceChildren("Campus Addの公式LINEを友だち追加すると、予約の確認と前日のお知らせがLINEに届きます。", el("br"), el("a",{href:CONFIG.lineUrl,target:"_blank",rel:"noopener",textContent:"友だち追加する"}));
+  else box.replaceChildren();
+  box.hidden=!box.childNodes.length;
+}
+
+// ---- 4. 予約の確認・キャンセル ----
+function renderMine(){
+  const box=$("#mList");
+  if(!ME.reservations.length){ box.replaceChildren(el("div",{className:"empty",textContent:"これからの予約はありません。"})); return; }
+  const jst=new Date(Date.now()+9*3600e3);
+  const today=`${jst.getUTCFullYear()}/${String(jst.getUTCMonth()+1).padStart(2,"0")}/${String(jst.getUTCDate()).padStart(2,"0")}`;
+  box.replaceChildren(...ME.reservations.map(r=>{
+    // 利用日当日は、ここからはキャンセルできない（LINEで連絡してもらう）
+    if(r.date<=today) return el("div",{className:"rsv"},[el("div",{},[el("b",{textContent:dateLabel(r.date,wOf(r.date))+" "+r.time}), el("small",{textContent:r.kind==="相談"?"キャンアドで相談":"スペース使用"})]), el("span",{className:"today",textContent:"本日の予約です。キャンセルや遅れる場合はLINEでご連絡ください"})]);
+    const btn=el("button",{type:"button",textContent:"キャンセル"});
+    btn.onclick=async()=>{
+      if(!confirm(dateLabel(r.date,wOf(r.date))+" "+r.time+" の予約をキャンセルしますか？")) return;
+      btn.disabled=true; btn.textContent="処理中…";
+      try{ const x=await API.post({action:"cancel",...who(),id:r.id}); if(!x.ok) throw new Error(x.error); await load(); renderMine(); }
+      catch(e){ alert(e.message||"キャンセルできませんでした。LINEでご連絡ください。"); btn.disabled=false; btn.textContent="キャンセル"; }
+    };
+    return el("div",{className:"rsv"},[el("div",{},[el("b",{textContent:dateLabel(r.date,wOf(r.date))+" "+r.time}), el("small",{textContent:r.kind==="相談"?"キャンアドで相談":"スペース使用"})]), btn]);
+  }));
+}
+// これまでの来館（新しい順）
+function renderHistory(){
+  const box=$("#mHist"), list=ME.history||[];
+  if(!list.length){ box.replaceChildren(el("div",{className:"empty",textContent:"来館の記録はまだありません。"})); return; }
+  box.replaceChildren(
+    el("p",{className:"histsum"},["これまでに ",el("b",{textContent:String(ME.visits||list.length)})," 回 来館しました"]),
+    ...list.map(r=>{
+      const [,mm,dd]=r.date.split("/").map(Number);
+      return el("div",{className:"hrow"},[
+        el("span",{className:"hd"},[el("b",{textContent:mm+"/"+dd}), el("small",{textContent:wOf(r.date)+" "+r.time})]),
+        el("span",{className:"hk"},[el("span",{className:"hkind",textContent:r.kind==="相談"?"キャンアドで相談":"スペース使用"}),
+          ...[r.topic1,r.topic2].filter(Boolean).map(t=>el("span",{className:"htopic",textContent:t}))])
+      ]);
+    }));
+}
+$("#toMine").onclick=()=>{ renderMine(); renderHistory(); show("mine"); };
+$("#mBack").onclick=()=>show("home");
+$("#cBack").onclick=()=>show("home");
+$("#dHome").onclick=()=>show("home");
+
+startLine().then(go=>{ if(go) load(); }).catch(()=>{
+  const n=$("#notice"); n.textContent="LINEでの確認ができませんでした。LINEのトーク画面のメニューから、もう一度開いてください。"; n.hidden=false;
+});
+</script>
+</body>
+</html>
