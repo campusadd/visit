@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ES作成ツール | Campus Add</title>
+<meta name="description" content="エントリーシートを入力して、そのままPDFにできます。入力内容はこの端末の中だけに保存されます。">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#fbf8f1; --surface:#ffffff; --soft:#f3eee3; --ink:#333333; --muted:#6f6a62; --line:#e7e0d2;
+  --blue:#2f6db0; --star:#f2b705; --accent:#16a06d; --accent-ink:#ffffff; --mark-soft:#fff3c7; --mark-ink:#7a5600; --danger:#c62828;
+  --f-body:"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.7}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 120px}
+header.top{display:flex;align-items:center;gap:14px;padding:22px 0 10px}
+header.top img{height:34px;width:auto}
+header.top h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.04em}
+.kick{display:flex;align-items:center;gap:8px;font-family:"Josefin Sans",var(--f-body);letter-spacing:.24em;color:var(--blue);font-size:13px;margin:6px 0 0}
+.kick::before{content:"";width:14px;height:14px;background:var(--star);clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%)}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:14px 0;font-size:14px;color:var(--muted)}
+.note b{color:var(--ink)}
+.note ul{margin:6px 0 0;padding-left:1.2em}
+.warn{background:var(--mark-soft);border-color:#f0dc9a;color:var(--mark-ink)}
+.warn a{color:var(--blue);font-weight:700}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 16px;margin:16px 0;box-shadow:0 10px 24px -22px rgba(60,40,10,.6)}
+.card h2{font-size:17px;margin:0 0 4px;display:flex;align-items:baseline;gap:10px}
+.card h2 .n{font-family:"Josefin Sans",var(--f-body);color:#b4936a;font-size:15px}
+.hint{font-size:13px;color:var(--muted);margin:0 0 10px}
+label.f{display:block;margin:12px 0 4px;font-size:14px;font-weight:500}
+.opt{font-size:12px;color:var(--muted);font-weight:400;margin-left:6px}
+input[type=text],input[type=date],select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{min-height:9em;resize:vertical;line-height:1.7}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;background:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cnt{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
+.cnt.over{color:#a86400;font-weight:700}
+.line{border:1px dashed var(--line);border-radius:12px;padding:10px;margin:10px 0;position:relative}
+.ym{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:14px}
+.ym select{width:auto;padding:8px 6px}
+.del{position:absolute;right:8px;top:6px;border:0;background:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:15px;font-weight:700;border-radius:999px;padding:10px 18px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.small{font-size:13px;padding:7px 14px;font-weight:500}
+.btn.danger{color:var(--danger)}
+.photo{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.photo .pv{width:90px;height:120px;border:1px solid var(--line);border-radius:6px;background:var(--soft) center/cover no-repeat;display:grid;place-items:center;color:var(--muted);font-size:12px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(251,248,241,.96);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:5}
+.bar .in{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.saved{font-size:12px;color:var(--muted);margin-right:auto}
+.howto{font-size:13px;color:var(--muted)}
+.howto dt{font-weight:700;color:var(--ink);margin-top:6px}
+.howto dd{margin:0}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+/* ---------- A4の用紙 ---------- */
+#pvwrap{overflow:hidden;margin:10px 0}
+#sheet{width:210mm;height:297mm;background:#fff;color:#222;padding:8mm 10mm;position:relative;transform-origin:0 0;font-family:"Noto Sans JP",var(--f-body);box-shadow:0 6px 24px rgba(0,0,0,.12)}
+#sheet .hd{height:14mm;display:flex;align-items:center}
+#sheet .hd img{height:13mm;margin-left:4mm}
+#sheet .hd .dt{margin-left:auto;margin-right:46mm;font-size:9pt}
+#sheet .ph{position:absolute;right:10mm;top:6mm;width:30mm;height:40mm;border:1px solid #ccc;background:#f4f4f4 center/cover no-repeat}
+#sheet .ph.none{background:#fff;display:grid;place-items:center;font-size:7pt;color:#aaa}
+#sheet .box{border:1px solid #999;border-radius:2.2mm;padding:2mm 3.5mm;margin-bottom:3mm}
+#sheet .nm{width:146mm;height:27mm;margin-top:1mm}
+#sheet .nm .k{font-size:7pt;color:#555}
+#sheet .nm .n{font-size:16pt;font-weight:700;letter-spacing:.08em;margin:0 0 0 2mm}
+#sheet .nm .lb{font-size:7pt;color:#555;display:inline-block;width:12mm}
+#sheet .nm .row{display:flex;align-items:baseline;min-height:6mm}
+#sheet table{width:100%;border-collapse:collapse;font-size:8pt}
+#sheet th{font-weight:400;font-size:9pt;border-bottom:1.2px solid #666;padding:.6mm 0}
+#sheet td{border-bottom:1px solid #ccc;height:5.4mm;padding:0 1mm;white-space:nowrap;overflow:hidden}
+#sheet .edu{height:39mm}
+#sheet .two{display:grid;grid-template-columns:1fr 1fr;gap:3mm}
+#sheet .two .box{height:36mm;overflow:hidden}
+#sheet .lic td{height:4.6mm}
+#sheet h3{font-size:10pt;font-weight:500;margin:0 0 1.5mm;display:inline-block;border-bottom:1px solid #666;padding-right:14mm}
+#sheet .tx{font-size:8.6pt;line-height:1.55;white-space:pre-wrap;word-break:break-all;overflow:hidden}
+#sheet .b1{height:40mm}
+#sheet .b2{height:55mm}
+#sheet .b3{height:57mm;margin-bottom:0}
+#sheet .b1 .tx{height:31mm} #sheet .b2 .tx{height:46mm} #sheet .b3 .tx{height:48mm} #sheet .hb .tx{height:27mm}
+@page{size:A4;margin:0}
+@media print{
+  html,body{background:#fff}
+  .noprint{display:none !important}
+  .wrap{max-width:none;padding:0;margin:0}
+  #pvwrap{margin:0;overflow:visible;height:auto !important}
+  #sheet{transform:none !important;box-shadow:none;margin:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="noprint">
+    <header class="top">
+      <img src="campus-add-logo.png" alt="Campus Add">
+    </header>
+    <p class="kick">ENTRY SHEET</p>
+    <h1 style="font-size:24px;margin:2px 0 0">ES作成ツール</h1>
+
+    <div class="note warn" id="lineWarn" hidden>
+      LINEの中で開いています。LINEの中だと<b>PDFにできなかったり、書いた内容が消えたりする</b>ことがあります。
+      <a id="extLink" href="#">ここを押してブラウザで開き直してください</a>。
+    </div>
+
+    <div class="note">
+      <b>入力した内容は、このスマホ・パソコンの中にだけ保存されます。</b>Campus Addや他の人に送られることはありません。
+      <ul>
+        <li>書いた内容は自動で保存されます。閉じても、同じ端末・同じブラウザで開けば続きから書けます。</li>
+        <li>別の端末で続きを書きたいときや、念のための控えには、下の「下書きをファイルに保存」を使ってください。</li>
+        <li>できあがったら「PDFにする」で保存・印刷できます。</li>
+      </ul>
+    </div>
+
+    <section class="card">
+      <h2><span class="n">01</span>基本情報</h2>
+      <label class="f" for="date">作成日</label>
+      <input type="date" id="date">
+      <div class="row2">
+        <div><label class="f" for="name">名前</label><input type="text" id="name" placeholder="例）見本 花子" autocomplete="name"></div>
+        <div><label class="f" for="kana">フリガナ</label><input type="text" id="kana" placeholder="例）ミホン ハナコ"></div>
+      </div>
+      <label class="f" for="gender">性別<span class="opt">任意（書かなくても大丈夫です）</span></label>
+      <select id="gender"><option value="">書かない</option><option>男性</option><option>女性</option><option>その他</option></select>
+      <label class="f">写真<span class="opt">任意</span></label>
+      <div class="photo">
+        <div class="pv" id="photoPv">写真なし</div>
+        <div class="tools">
+          <label class="btn small" for="photoIn">写真を選ぶ</label>
+          <input type="file" id="photoIn" accept="image/*" hidden>
+          <button class="btn small danger" id="photoDel" type="button" hidden>写真を外す</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:6px">縦長（3:4）に切り取って使います。写真もこの端末の中にだけ保存されます。</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">02</span>学歴</h2>
+      <p class="hint">高校から順に書きます。</p>
+      <div id="eduList"></div>
+      <button class="btn small" type="button" id="eduAdd">＋ 行を足す</button>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">03</span>保有資格・スキル</h2>
+      <p class="hint">取った年月と名前を書きます。なければ空欄で大丈夫です。</p>
+      <div id="licList"></div>
+      <button class="btn small" type="button" id="licAdd">＋ 行を足す</button>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">04</span>趣味・特技</h2>
+      <textarea id="hobby" data-max="150" placeholder="例）趣味はカフェめぐりで、気に入ったお店の雰囲気やメニューをノートに記録しています。"></textarea>
+      <div class="cnt" data-for="hobby"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">05</span>学業・ゼミ・研究で取り組んだこと</h2>
+      <textarea id="study" data-max="300" style="min-height:12em"></textarea>
+      <div class="cnt" data-for="study"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">06</span>自己PR</h2>
+      <textarea id="pr" data-max="400" style="min-height:14em"></textarea>
+      <div class="cnt" data-for="pr"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">07</span>学生時代に力を入れたこと</h2>
+      <textarea id="gakuchika" data-max="400" style="min-height:14em"></textarea>
+      <div class="cnt" data-for="gakuchika"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">08</span>できあがりを見る</h2>
+      <p class="hint">PDFにすると、この形になります。字数が多いときは、枠に収まるように字が小さくなります。</p>
+    </section>
+  </div>
+
+  <div id="pvwrap"><div id="sheet"></div></div>
+
+  <div class="noprint">
+    <section class="card">
+      <h2>PDFにする</h2>
+      <p><button class="btn main" type="button" id="printBtn2">PDFにする</button></p>
+      <dl class="howto">
+        <dt>パソコン</dt><dd>出てきた画面の「送信先（プリンター）」で「PDFに保存」を選んで「保存」。</dd>
+        <dt>iPhone</dt><dd>出てきた画面の右上の共有ボタン（□に↑）→「"ファイル"に保存」。</dd>
+        <dt>Android</dt><dd>出てきた画面の上の「プリンタを選択」→「PDF形式で保存」→ PDFのボタン。</dd>
+      </dl>
+    </section>
+    <section class="card">
+      <h2>下書きの保存</h2>
+      <p class="hint">別の端末で続きを書くときは、ファイルに保存して、その端末で「ファイルから読み込む」を押してください。</p>
+      <div class="tools">
+        <button class="btn small" type="button" id="exportBtn">下書きをファイルに保存</button>
+        <label class="btn small" for="importIn">ファイルから読み込む</label>
+        <input type="file" id="importIn" accept=".json,application/json" hidden>
+        <button class="btn small danger" type="button" id="clearBtn">全部消す</button>
+      </div>
+    </section>
+    <p class="howto" style="text-align:center;margin-top:24px">© 2026 Campus Add</p>
+  </div>
+</div>
+
+<div class="bar noprint">
+  <div class="in">
+    <span class="saved" id="saved">この端末に自動で保存されます</span>
+    <button class="btn" type="button" id="pvBtn">できあがりを見る</button>
+    <button class="btn main" type="button" id="printBtn">PDFにする</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+const KEY = "ca_es_v1";
+const $ = s => document.querySelector(s);
+const el = (tag, props, kids) => { const n = document.createElement(tag); Object.assign(n, props || {}); (kids || []).forEach(k => k != null && n.append(k)); return n; };
+const store = {
+  get(){ try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch(e) { return null; } },
+  set(v){ try { localStorage.setItem(KEY, JSON.stringify(v)); return true; } catch(e) { return false; } }
+};
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); };
+const blank = () => ({ date: today(), name: "", kana: "", gender: "", photo: "",
+  edu: [{ fy:"", fm:"4", ty:"", tm:"3", st:"卒業", school:"" }, { fy:"", fm:"4", ty:"", tm:"3", st:"卒業予定", school:"" }],
+  lic: [{ y:"", m:"", name:"" }, { y:"", m:"", name:"" }],
+  hobby: "", study: "", pr: "", gakuchika: "" });
+let S = Object.assign(blank(), store.get() || {});
+
+// LINEの中で開いたとき：外のブラウザで開き直す案内
+if (/\bLine\//i.test(navigator.userAgent)) {
+  $("#lineWarn").hidden = false;
+  const u = new URL(location.href); u.searchParams.set("openExternalBrowser", "1");
+  $("#extLink").href = u.toString();
+}
+
+// ---------- 入力欄 ----------
+const NOW_Y = new Date().getFullYear();
+const years = (from, to) => { const a = []; for (let y = from; y <= to; y++) a.push(String(y)); return a; };
+function sel(options, value, onChange, first) {
+  const s = el("select");
+  if (first !== undefined) s.append(el("option", { value: "", textContent: first }));
+  options.forEach(o => s.append(el("option", { value: o, textContent: o })));
+  s.value = value || ""; s.onchange = () => onChange(s.value); return s;
+}
+function txt(value, ph, onInput) { const i = el("input", { type: "text", value: value || "", placeholder: ph || "" }); i.oninput = () => onInput(i.value); return i; }
+const MONTHS = years(1, 12);
+
+function renderEdu() {
+  const box = $("#eduList"); box.replaceChildren();
+  S.edu.forEach((r, i) => {
+    const ph = i === 0 ? "例）サンプル高等学校 普通科" : "例）サンプル大学 経済学部 地域経済学科";
+    box.append(el("div", { className: "line" }, [
+      S.edu.length > 1 ? el("button", { className: "del", type: "button", textContent: "× 消す", onclick: () => { S.edu.splice(i, 1); renderEdu(); changed(); } }) : null,
+      el("div", { className: "ym" }, [
+        sel(years(NOW_Y - 12, NOW_Y + 6), r.fy, v => { r.fy = v; changed(); }, "年"), "年",
+        sel(MONTHS, r.fm, v => { r.fm = v; changed(); }, "月"), "月入学 〜"
+      ]),
+      el("div", { className: "ym", style: "margin-top:6px" }, [
+        sel(years(NOW_Y - 12, NOW_Y + 6), r.ty, v => { r.ty = v; changed(); }, "年"), "年",
+        sel(MONTHS, r.tm, v => { r.tm = v; changed(); }, "月"), "月",
+        sel(["卒業", "卒業予定", "修了", "修了予定", "中退"], r.st, v => { r.st = v; changed(); })
+      ]),
+      el("label", { className: "f", textContent: "学校名・学部学科名" }),
+      txt(r.school, ph, v => { r.school = v; changed(); })
+    ]));
+  });
+  $("#eduAdd").hidden = S.edu.length >= 5;
+}
+function renderLic() {
+  const box = $("#licList"); box.replaceChildren();
+  S.lic.forEach((r, i) => {
+    box.append(el("div", { className: "line" }, [
+      el("button", { className: "del", type: "button", textContent: "× 消す", onclick: () => { S.lic.splice(i, 1); renderLic(); changed(); } }),
+      el("div", { className: "ym" }, [
+        sel(years(NOW_Y - 10, NOW_Y + 2), r.y, v => { r.y = v; changed(); }, "年"), "年",
+        sel(MONTHS, r.m, v => { r.m = v; changed(); }, "月"), "月"
+      ]),
+      el("label", { className: "f", textContent: "資格・スキルの名前" }),
+      txt(r.name, i === 0 ? "例）普通自動車第一種運転免許" : "例）日商簿記検定3級", v => { r.name = v; changed(); })
+    ]));
+  });
+  $("#licAdd").hidden = S.lic.length >= 5;
+}
+$("#eduAdd").onclick = () => { S.edu.push({ fy:"", fm:"4", ty:"", tm:"3", st:"卒業予定", school:"" }); renderEdu(); changed(); };
+$("#licAdd").onclick = () => { S.lic.push({ y:"", m:"", name:"" }); renderLic(); changed(); };
+
+const FIELDS = ["date", "name", "kana", "gender", "hobby", "study", "pr", "gakuchika"];
+function fillFields() {
+  FIELDS.forEach(k => { $("#" + k).value = S[k] || ""; });
+  renderEdu(); renderLic(); renderPhoto(); counts();
+}
+FIELDS.forEach(k => { const n = $("#" + k); n.addEventListener("input", () => { S[k] = n.value; counts(); changed(); }); });
+function counts() {
+  document.querySelectorAll(".cnt").forEach(c => {
+    const t = $("#" + c.dataset.for), max = Number(t.dataset.max), n = [...t.value.replace(/\n/g, "")].length;
+    c.textContent = n + "字 ／ 目安 " + max + "字" + (n > max ? "（多めです。枠に入るよう字が小さくなります）" : "");
+    c.classList.toggle("over", n > max);
+  });
+}
+
+// ---------- 写真（3:4に切り取って小さくする） ----------
+function renderPhoto() {
+  const pv = $("#photoPv");
+  pv.style.backgroundImage = S.photo ? "url(" + S.photo + ")" : ""; pv.textContent = S.photo ? "" : "写真なし";
+  $("#photoDel").hidden = !S.photo;
+}
+$("#photoIn").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const img = new Image(), url = URL.createObjectURL(f);
+  img.onload = () => {
+    const W = 450, H = 600, r = W / H;
+    let sw = img.width, sh = img.height, sx = 0, sy = 0;
+    if (sw / sh > r) { sw = sh * r; sx = (img.width - sw) / 2; } else { sh = sw / r; sy = (img.height - sh) / 2; }
+    const c = el("canvas", { width: W, height: H });
+    c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+    S.photo = c.toDataURL("image/jpeg", 0.85); URL.revokeObjectURL(url);
+    renderPhoto(); changed();
+  };
+  img.onerror = () => alert("この写真は読み込めませんでした。別の写真（JPEGやPNG）を選んでください。");
+  img.src = url; e.target.value = "";
+};
+$("#photoDel").onclick = () => { S.photo = ""; renderPhoto(); changed(); };
+
+// ---------- 保存 ----------
+let timer = 0;
+function changed() {
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    const ok = store.set(S);
+    $("#saved").textContent = ok ? "この端末に保存しました（" + new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) + "）" : "この端末に保存できませんでした。「下書きをファイルに保存」で控えを取ってください";
+    renderSheet();
+  }, 400);
+}
+
+// ---------- A4の用紙 ----------
+const jpDate = s => { const m = String(s || "").match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${+m[1]}年${+m[2]}月${+m[3]}日` : ""; };
+const ym = (y, m) => y ? y + "年" + (m ? m + "月" : "") : "";
+function renderSheet() {
+  const sh = $("#sheet");
+  const eduRows = S.edu.filter(r => r.fy || r.ty || r.school).map(r => [(r.fy ? ym(r.fy, r.fm) + "入学" : "") + (r.ty ? "〜" + ym(r.ty, r.tm) + r.st : ""), r.school]);
+  const licRows = S.lic.filter(r => r.y || r.name).map(r => [ym(r.y, r.m), r.name]);
+  const pad = (rows, n) => rows.concat(Array(Math.max(0, n - rows.length)).fill(["", ""]));
+  const table = (head, rows, w) => el("table", {}, [
+    head ? el("tr", {}, head.map((h, i) => el("th", { textContent: h, style: "width:" + w[i] }))) : null,
+    ...rows.map(r => el("tr", {}, r.map((c, i) => el("td", { textContent: c, style: head ? "" : "width:" + w[i] }))))
+  ]);
+  const photo = el("div", { className: "ph" + (S.photo ? "" : " none"), textContent: S.photo ? "" : "写真" });
+  if (S.photo) photo.style.backgroundImage = "url(" + S.photo + ")";
+  const sect = (title, cls, text) => el("div", { className: "box " + cls }, [el("h3", { textContent: title }), el("div", { className: "tx", textContent: text || "" })]);
+  sh.replaceChildren(
+    el("div", { className: "hd" }, [el("img", { src: "campus-add-logo.png", alt: "Campus Add" }), el("span", { className: "dt", textContent: jpDate(S.date) })]),
+    photo,
+    el("div", { className: "box nm" }, [
+      el("div", { className: "row" }, [el("span", { className: "lb", textContent: "フリガナ" }), el("span", { className: "k", textContent: S.kana })]),
+      el("div", { className: "row" }, [el("span", { className: "lb", textContent: "名前" }), el("span", { className: "n", textContent: S.name })]),
+      el("div", { className: "row" }, [el("span", { className: "lb", textContent: "性別" }), el("span", { className: "k", textContent: S.gender })])
+    ]),
+    el("div", { className: "box edu" }, [table(["年月", "大学名・学部学科名"], pad(eduRows, 5), ["40%", "60%"])]),
+    el("div", { className: "two" }, [
+      el("div", { className: "box lic" }, [el("h3", { textContent: "保有資格・スキル" }), table(null, pad(licRows, 5), ["30%", "70%"])]),
+      sect("趣味・特技", "hb", S.hobby)
+    ]),
+    sect("学業・ゼミ・研究で取り組んだこと", "b1", S.study),
+    sect("自己PR", "b2", S.pr),
+    sect("学生時代に力を入れたこと", "b3", S.gakuchika)
+  );
+  fitAll(); scale();
+}
+// 枠に入らないときは字を小さくする（6.5ptまで）
+function fitAll() {
+  document.querySelectorAll("#sheet .tx").forEach(t => {
+    let size = 8.6; t.style.fontSize = size + "pt";
+    while (t.scrollHeight > t.clientHeight + 1 && size > 6.5) { size -= 0.2; t.style.fontSize = size.toFixed(1) + "pt"; }
+  });
+}
+function scale() {
+  const wrap = $("#pvwrap"), sh = $("#sheet");
+  const k = Math.min(1, wrap.clientWidth / sh.offsetWidth);
+  sh.style.transform = "scale(" + k + ")"; wrap.style.height = (sh.offsetHeight * k) + "px";
+}
+window.addEventListener("resize", scale);
+window.addEventListener("beforeprint", () => { $("#sheet").style.transform = "none"; fitAll(); });
+window.addEventListener("afterprint", scale);
+
+// ---------- ボタン ----------
+function doPrint() {
+  if (!S.name.trim()) { if (!confirm("名前がまだ空欄です。このままPDFにしますか？")) return; }
+  store.set(S); renderSheet(); setTimeout(() => window.print(), 50);
+}
+$("#printBtn").onclick = doPrint; $("#printBtn2").onclick = doPrint;
+$("#pvBtn").onclick = () => $("#pvwrap").scrollIntoView({ behavior: "smooth", block: "start" });
+$("#exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(S)], { type: "application/json" });
+  const a = el("a", { href: URL.createObjectURL(blob), download: "ES下書き_" + (S.name.replace(/\s/g, "") || "名前なし") + "_" + today() + ".json" });
+  document.body.append(a); a.click(); a.remove();
+};
+$("#importIn").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => {
+    const d = JSON.parse(t);
+    if (!d || typeof d !== "object" || !Array.isArray(d.edu)) throw new Error();
+    if (!confirm("いま入力している内容を、このファイルの内容に置きかえます。よろしいですか？")) return;
+    S = Object.assign(blank(), d); store.set(S); fillFields(); renderSheet();
+  }).catch(() => alert("このファイルは読み込めませんでした。「下書きをファイルに保存」で作ったファイルを選んでください。"));
+  e.target.value = "";
+};
+$("#clearBtn").onclick = () => {
+  if (!confirm("入力した内容と写真を、この端末からすべて消します。元に戻せません。よろしいですか？")) return;
+  S = blank(); try { localStorage.removeItem(KEY); } catch(e) {}
+  fillFields(); renderSheet(); $("#saved").textContent = "消しました";
+};
+
+fillFields();
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(renderSheet);
+renderSheet();
+</script>
+</body>
+</html>
