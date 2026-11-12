@@ -51,6 +51,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .btn.small{font-size:13px;padding:7px 14px;font-weight:500}
 .btn.danger{color:var(--danger)}
 .photo{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.photo .pv.wide{width:136px;height:102px}
 .photo .pv{width:90px;height:120px;border:1px solid var(--line);border-radius:6px;background:var(--soft) center/cover no-repeat;display:grid;place-items:center;color:var(--muted);font-size:12px}
 .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(251,248,241,.96);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:5}
 .bar .in{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -66,6 +67,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 #sheet .hd img{height:13mm;margin-left:4mm}
 #sheet .hd .dt{margin-left:auto;margin-right:46mm;font-size:9pt}
 #sheet .ph{position:absolute;right:10mm;top:6mm;width:30mm;height:40mm;border:1px solid #ccc;background:#f4f4f4 center/cover no-repeat}
+#sheet .ph img{display:block;width:100%;height:100%;object-fit:cover}
 #sheet .ph.none{background:#fff;display:grid;place-items:center;font-size:7pt;color:#aaa}
 #sheet .box{border:1px solid #999;border-radius:2.2mm;padding:2mm 3.5mm;margin-bottom:3mm}
 #sheet .nm{width:146mm;height:27mm;margin-top:1mm}
@@ -85,6 +87,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 #sheet .b1{height:40mm}
 #sheet .b2{height:55mm}
 #sheet .b3{height:57mm;margin-bottom:0}
+#sheet .bx{display:flex;gap:3.5mm;align-items:flex-start}
+#sheet .bx .tx{flex:1;min-width:0}
+#sheet .pic{width:46mm;flex:none}
+#sheet .pic img{display:block;width:46mm;height:34.5mm;object-fit:cover;border:1px solid #ccc}
+#sheet .pic .cap{font-size:7pt;line-height:1.4;color:#444;margin-top:1mm;white-space:pre-wrap;word-break:break-all;max-height:10mm;overflow:hidden}
 #sheet .b1 .tx{height:31mm} #sheet .b2 .tx{height:46mm} #sheet .b3 .tx{height:48mm} #sheet .hb .tx{height:27mm}
 @page{size:A4;margin:0}
 @media print{
@@ -171,12 +178,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
       <h2><span class="n">06</span>自己PR</h2>
       <textarea id="pr" data-max="400" style="min-height:14em"></textarea>
       <div class="cnt" data-for="pr"></div>
+      <div class="sub" data-pic="pr"></div>
     </section>
 
     <section class="card">
       <h2><span class="n">07</span>学生時代に力を入れたこと</h2>
       <textarea id="gakuchika" data-max="400" style="min-height:14em"></textarea>
       <div class="cnt" data-for="gakuchika"></div>
+      <div class="sub" data-pic="gk"></div>
     </section>
 
     <section class="card">
@@ -232,7 +241,7 @@ const today = () => { const d = new Date(); return d.getFullYear() + "-" + Strin
 const blank = () => ({ date: today(), name: "", kana: "", gender: "", photo: "",
   edu: [{ fy:"", fm:"4", ty:"", tm:"3", st:"卒業", school:"" }, { fy:"", fm:"4", ty:"", tm:"3", st:"卒業予定", school:"" }],
   lic: [{ y:"", m:"", name:"" }, { y:"", m:"", name:"" }],
-  hobby: "", study: "", pr: "", gakuchika: "" });
+  hobby: "", study: "", pr: "", gakuchika: "", prPhoto: "", prCap: "", gkPhoto: "", gkCap: "" });
 let S = Object.assign(blank(), store.get() || {});
 
 // LINEの中で開いたとき：外のブラウザで開き直す案内
@@ -296,7 +305,7 @@ $("#licAdd").onclick = () => { S.lic.push({ y:"", m:"", name:"" }); renderLic();
 const FIELDS = ["date", "name", "kana", "gender", "hobby", "study", "pr", "gakuchika"];
 function fillFields() {
   FIELDS.forEach(k => { $("#" + k).value = S[k] || ""; });
-  renderEdu(); renderLic(); renderPhoto(); counts();
+  renderEdu(); renderLic(); renderPhoto(); renderPics(); counts();
 }
 FIELDS.forEach(k => { const n = $("#" + k); n.addEventListener("input", () => { S[k] = n.value; counts(); changed(); }); });
 function counts() {
@@ -307,7 +316,20 @@ function counts() {
   });
 }
 
-// ---------- 写真（3:4に切り取って小さくする） ----------
+// ---------- 写真（決まった縦横の比に切り取って小さくする） ----------
+function cropPhoto(file, W, H, done) {
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    const r = W / H;
+    let sw = img.width, sh = img.height, sx = 0, sy = 0;
+    if (sw / sh > r) { sw = sh * r; sx = (img.width - sw) / 2; } else { sh = sw / r; sy = (img.height - sh) / 2; }
+    const c = el("canvas", { width: W, height: H });
+    c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+    URL.revokeObjectURL(url); done(c.toDataURL("image/jpeg", 0.85));
+  };
+  img.onerror = () => alert("この写真は読み込めませんでした。別の写真（JPEGやPNG）を選んでください。");
+  img.src = url;
+}
 function renderPhoto() {
   const pv = $("#photoPv");
   pv.style.backgroundImage = S.photo ? "url(" + S.photo + ")" : ""; pv.textContent = S.photo ? "" : "写真なし";
@@ -315,20 +337,32 @@ function renderPhoto() {
 }
 $("#photoIn").onchange = e => {
   const f = e.target.files[0]; if (!f) return;
-  const img = new Image(), url = URL.createObjectURL(f);
-  img.onload = () => {
-    const W = 450, H = 600, r = W / H;
-    let sw = img.width, sh = img.height, sx = 0, sy = 0;
-    if (sw / sh > r) { sw = sh * r; sx = (img.width - sw) / 2; } else { sh = sw / r; sy = (img.height - sh) / 2; }
-    const c = el("canvas", { width: W, height: H });
-    c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
-    S.photo = c.toDataURL("image/jpeg", 0.85); URL.revokeObjectURL(url);
-    renderPhoto(); changed();
-  };
-  img.onerror = () => alert("この写真は読み込めませんでした。別の写真（JPEGやPNG）を選んでください。");
-  img.src = url; e.target.value = "";
+  cropPhoto(f, 450, 600, d => { S.photo = d; renderPhoto(); changed(); });
+  e.target.value = "";
 };
 $("#photoDel").onclick = () => { S.photo = ""; renderPhoto(); changed(); };
+
+// 自己PR・ガクチカの写真（横長 4:3）とキャプション
+function renderPics() {
+  document.querySelectorAll("[data-pic]").forEach(box => {
+    const k = box.dataset.pic, pk = k + "Photo", ck = k + "Cap";
+    const pv = el("div", { className: "pv wide", textContent: S[pk] ? "" : "写真なし" });
+    if (S[pk]) pv.style.backgroundImage = "url(" + S[pk] + ")";
+    const inp = el("input", { type: "file", accept: "image/*", hidden: true, id: "in-" + k });
+    inp.onchange = e => { const f = e.target.files[0]; if (!f) return; cropPhoto(f, 600, 450, d => { S[pk] = d; renderPics(); changed(); }); e.target.value = ""; };
+    const cap = el("input", { type: "text", value: S[ck] || "", placeholder: "例）手順書を作ったときの様子", maxLength: 40 });
+    cap.oninput = () => { S[ck] = cap.value; changed(); };
+    box.replaceChildren(
+      el("label", { className: "f" }, ["写真", el("span", { className: "opt", textContent: "任意（横長に切り取って、文章の右に入ります）" })]),
+      el("div", { className: "photo" }, [pv, el("div", { className: "tools" }, [
+        el("label", { className: "btn small", htmlFor: "in-" + k, textContent: "写真を選ぶ" }), inp,
+        S[pk] ? el("button", { className: "btn small danger", type: "button", textContent: "写真を外す", onclick: () => { S[pk] = ""; renderPics(); changed(); } }) : null
+      ])]),
+      el("label", { className: "f" }, ["写真のキャプション（コメント）", el("span", { className: "opt", textContent: "任意・40字まで。写真の下に入ります" })]),
+      cap
+    );
+  });
+}
 
 // ---------- 保存 ----------
 let timer = 0;
@@ -353,9 +387,14 @@ function renderSheet() {
     head ? el("tr", {}, head.map((h, i) => el("th", { textContent: h, style: "width:" + w[i] }))) : null,
     ...rows.map(r => el("tr", {}, r.map((c, i) => el("td", { textContent: c, style: head ? "" : "width:" + w[i] }))))
   ]);
+  // 背景画像だと「背景のグラフィック」がオフの印刷で消えるので、ふつうの画像として置く
   const photo = el("div", { className: "ph" + (S.photo ? "" : " none"), textContent: S.photo ? "" : "写真" });
-  if (S.photo) photo.style.backgroundImage = "url(" + S.photo + ")";
-  const sect = (title, cls, text) => el("div", { className: "box " + cls }, [el("h3", { textContent: title }), el("div", { className: "tx", textContent: text || "" })]);
+  if (S.photo) photo.append(el("img", { src: S.photo, alt: "" }));
+  const sect = (title, cls, text, pic, cap) => el("div", { className: "box " + cls }, [el("h3", { textContent: title }),
+    pic // キャプションは写真があるときだけ出す
+      ? el("div", { className: "bx" }, [el("div", { className: "tx", textContent: text || "" }),
+          el("div", { className: "pic" }, [el("img", { src: pic, alt: "" }), cap ? el("div", { className: "cap", textContent: cap }) : null])])
+      : el("div", { className: "tx", textContent: text || "" })]);
   sh.replaceChildren(
     el("div", { className: "hd" }, [el("img", { src: "campus-add-logo.png", alt: "Campus Add" }), el("span", { className: "dt", textContent: jpDate(S.date) })]),
     photo,
@@ -370,8 +409,8 @@ function renderSheet() {
       sect("趣味・特技", "hb", S.hobby)
     ]),
     sect("学業・ゼミ・研究で取り組んだこと", "b1", S.study),
-    sect("自己PR", "b2", S.pr),
-    sect("学生時代に力を入れたこと", "b3", S.gakuchika)
+    sect("自己PR", "b2", S.pr, S.prPhoto, S.prCap),
+    sect("学生時代に力を入れたこと", "b3", S.gakuchika, S.gkPhoto, S.gkCap)
   );
   fitAll(); scale();
 }
