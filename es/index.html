@@ -60,6 +60,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .howto dt{font-weight:700;color:var(--ink);margin-top:6px}
 .howto dd{margin:0}
 .tools{display:flex;gap:8px;flex-wrap:wrap}
+a.btn{text-decoration:none}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;z-index:10;padding:16px}
+.modal[hidden]{display:none}
+.mbox{background:var(--surface);border-radius:18px;padding:20px;max-width:420px;width:100%}
 /* ---------- A4の用紙 ---------- */
 #pvwrap{overflow:hidden;margin:10px 0}
 #sheet{width:210mm;height:297mm;background:#fff;color:#222;padding:8mm 10mm;position:relative;transform-origin:0 0;font-family:"Noto Sans JP",var(--f-body);box-shadow:0 6px 24px rgba(0,0,0,.12)}
@@ -200,11 +204,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
     <section class="card">
       <h2>PDFにする</h2>
       <p><button class="btn main" type="button" id="printBtn2">PDFにする</button></p>
-      <dl class="howto">
-        <dt>パソコン</dt><dd>出てきた画面の「送信先（プリンター）」で「PDFに保存」を選んで「保存」。</dd>
-        <dt>iPhone</dt><dd>出てきた画面の右上の共有ボタン（□に↑）→「"ファイル"に保存」。</dd>
-        <dt>Android</dt><dd>出てきた画面の上の「プリンタを選択」→「PDF形式で保存」→ PDFのボタン。</dd>
-      </dl>
+      <p class="howto">ボタンを押すと、数秒でPDFができます。「PDFを保存する」を押して保存してください（iPhoneは開いたPDFの共有ボタン □↑ から「"ファイル"に保存」）。</p>
+      <p class="howto">うまくいかないときは <button class="btn small" type="button" id="printOld">印刷の画面からPDFにする</button>（パソコン向け。送信先で「PDFに保存」を選びます）</p>
     </section>
     <section class="card">
       <h2>下書きの保存</h2>
@@ -217,6 +218,18 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
       </div>
     </section>
     <p class="howto" style="text-align:center;margin-top:24px">© 2026 Campus Add</p>
+  </div>
+</div>
+
+<div class="modal noprint" id="pdfBox" hidden>
+  <div class="mbox">
+    <p id="pdfMsg" style="font-weight:700;margin:0 0 12px">PDFを作っています…</p>
+    <div class="tools" id="pdfBtns" hidden>
+      <a class="btn main" id="pdfSave" href="#" download="ES.pdf">PDFを保存する</a>
+      <button class="btn" type="button" id="pdfShare" hidden>共有・送る</button>
+    </div>
+    <p class="howto" id="pdfHelp" hidden style="margin:10px 0 0">iPhoneでPDFが開いたときは、共有ボタン（□に↑）→「"ファイル"に保存」で保存できます。</p>
+    <p style="margin:14px 0 0;text-align:right"><button class="btn small" type="button" id="pdfClose">閉じる</button></p>
   </div>
 </div>
 
@@ -431,15 +444,52 @@ window.addEventListener("beforeprint", () => { $("#sheet").style.transform = "no
 window.addEventListener("afterprint", scale);
 
 // ---------- ボタン ----------
-function doPrint() {
-  if (!S.name.trim()) { if (!confirm("名前がまだ空欄です。このままPDFにしますか？")) return; }
-  store.set(S); renderSheet(); setTimeout(() => window.print(), 50);
+// 印刷の画面を使う方法（パソコン向けの予備）
+// 保存するファイルの名前（例：ES_見本花子_20261112）
+const fileName = () => "ES_" + (S.name.replace(/[\s　]/g, "").replace(/[\\/:*?"<>|]/g, "") || "名前なし") + "_" + today().replace(/-/g, "");
+// 印刷の画面でPDFにすると、ページの題名がファイル名になるので、その間だけ題名を変える
+const TITLE = document.title;
+window.addEventListener("afterprint", () => { document.title = TITLE; });
+function doPrint() { store.set(S); renderSheet(); document.title = fileName(); setTimeout(() => window.print(), 50); }
+$("#printOld").onclick = doPrint;
+
+// ページの中でPDFファイルを直接作る（スマホやLINEの中でも使えるように）
+const loadJs = src => new Promise((ok, ng) => { if (document.querySelector('script[src="' + src + '"]')) return ok(); const s = el("script", { src }); s.onload = ok; s.onerror = ng; document.head.append(s); });
+let pdfUrl = "", pdfFile = null;
+async function makePdf() {
+  if (!S.name.trim() && !confirm("名前がまだ空欄です。このままPDFにしますか？")) return;
+  store.set(S); renderSheet();
+  const box = $("#pdfBox"); box.hidden = false;
+  $("#pdfMsg").textContent = "PDFを作っています…（数秒かかります）"; $("#pdfBtns").hidden = true; $("#pdfHelp").hidden = true;
+  try {
+    await loadJs("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    await loadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const sh = $("#sheet");
+    const canvas = await html2canvas(sh, { scale: 2.5, backgroundColor: "#ffffff", useCORS: true, logging: false,
+      onclone: doc => { const c = doc.querySelector("#sheet"); c.style.transform = "none"; c.style.boxShadow = "none"; doc.querySelector("#pvwrap").style.height = "auto"; } });
+    const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 210, 297);
+    const blob = pdf.output("blob");
+    const name = fileName() + ".pdf";
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    pdfUrl = URL.createObjectURL(blob);
+    pdfFile = typeof File === "function" ? new File([blob], name, { type: "application/pdf" }) : null;
+    const a = $("#pdfSave"); a.href = pdfUrl; a.download = name;
+    $("#pdfShare").hidden = !(pdfFile && navigator.canShare && navigator.canShare({ files: [pdfFile] }));
+    $("#pdfMsg").textContent = "PDFができました。";
+    $("#pdfBtns").hidden = false; $("#pdfHelp").hidden = !/iPhone|iPad|iPod/.test(navigator.userAgent);
+  } catch (e) {
+    $("#pdfMsg").textContent = "PDFを作れませんでした。通信のよい所でもう一度押すか、パソコンで「印刷の画面からPDFにする」を試してください。";
+  }
 }
-$("#printBtn").onclick = doPrint; $("#printBtn2").onclick = doPrint;
+$("#printBtn").onclick = makePdf; $("#printBtn2").onclick = makePdf;
+$("#pdfShare").onclick = () => { navigator.share({ files: [pdfFile], title: "ES" }).catch(() => {}); };
+$("#pdfClose").onclick = () => { $("#pdfBox").hidden = true; };
 $("#pvBtn").onclick = () => $("#pvwrap").scrollIntoView({ behavior: "smooth", block: "start" });
 $("#exportBtn").onclick = () => {
   const blob = new Blob([JSON.stringify(S)], { type: "application/json" });
-  const a = el("a", { href: URL.createObjectURL(blob), download: "ES下書き_" + (S.name.replace(/\s/g, "") || "名前なし") + "_" + today() + ".json" });
+  const a = el("a", { href: URL.createObjectURL(blob), download: fileName().replace(/^ES_/, "ES下書き_") + ".json" });
   document.body.append(a); a.click(); a.remove();
 };
 $("#importIn").onchange = e => {
