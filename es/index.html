@@ -36,6 +36,7 @@ header.top h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.04em}
 .hint{font-size:13px;color:var(--muted);margin:0 0 10px}
 label.f{display:block;margin:12px 0 4px;font-size:14px;font-weight:500}
 .opt{font-size:12px;color:var(--muted);font-weight:400;margin-left:6px}
+.req{font-size:11px;color:#fff;background:#d9534f;border-radius:4px;padding:1px 6px;font-weight:700;margin-left:6px}
 input[type=text],input[type=date],select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 textarea{min-height:9em;resize:vertical;line-height:1.7}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;background:#fff}
@@ -143,16 +144,16 @@ a.btn{text-decoration:none}
       </div>
       <label class="f" for="gender">性別<span class="opt">任意（書かなくても大丈夫です）</span></label>
       <select id="gender"><option value="">書かない</option><option>男性</option><option>女性</option><option>その他</option></select>
-      <label class="f">写真<span class="opt">任意</span></label>
+      <label class="f">証明写真<span class="req">必須</span></label>
       <div class="photo">
-        <div class="pv" id="photoPv">写真なし</div>
+        <div class="pv" id="photoPv">証明写真<br>なし</div>
         <div class="tools">
-          <label class="btn small" for="photoIn">写真を選ぶ</label>
+          <label class="btn small" for="photoIn">証明写真を選ぶ</label>
           <input type="file" id="photoIn" accept="image/*" hidden>
           <button class="btn small danger" id="photoDel" type="button" hidden>写真を外す</button>
         </div>
       </div>
-      <p class="hint" style="margin-top:6px">縦長（3:4）に切り取って使います。写真もこの端末の中にだけ保存されます。</p>
+      <p class="hint" style="margin-top:6px">証明写真のデータ（スマホで撮ったものでもOK）を選んでください。縦長（3:4）に切り取って使います。写真もこの端末の中にだけ保存されます。</p>
     </section>
 
     <section class="card">
@@ -355,7 +356,7 @@ function cropPhoto(file, W, H, done) {
 }
 function renderPhoto() {
   const pv = $("#photoPv");
-  pv.style.backgroundImage = S.photo ? "url(" + S.photo + ")" : ""; pv.textContent = S.photo ? "" : "写真なし";
+  pv.style.backgroundImage = S.photo ? "url(" + S.photo + ")" : ""; pv.innerHTML = S.photo ? "" : "証明写真<br>なし";
   $("#photoDel").hidden = !S.photo;
 }
 $("#photoIn").onchange = e => {
@@ -411,7 +412,7 @@ function renderSheet() {
     ...rows.map(r => el("tr", {}, r.map((c, i) => el("td", { textContent: c, style: head ? "" : "width:" + w[i] }))))
   ]);
   // 背景画像だと「背景のグラフィック」がオフの印刷で消えるので、ふつうの画像として置く
-  const photo = el("div", { className: "ph" + (S.photo ? "" : " none"), textContent: S.photo ? "" : "写真" });
+  const photo = el("div", { className: "ph" + (S.photo ? "" : " none"), textContent: S.photo ? "" : "証明写真" });
   if (S.photo) photo.append(el("img", { src: S.photo, alt: "" }));
   const sect = (title, cls, text, pic, cap) => el("div", { className: "box " + cls }, [el("h3", { textContent: title }),
     pic // キャプションは写真があるときだけ出す
@@ -462,13 +463,15 @@ const fileName = () => "ES_" + (S.name.replace(/[\s　]/g, "").replace(/[\\/:*?"
 // 印刷の画面でPDFにすると、ページの題名がファイル名になるので、その間だけ題名を変える
 const TITLE = document.title;
 window.addEventListener("afterprint", () => { document.title = TITLE; });
-function doPrint() { store.set(S); renderSheet(); document.title = fileName(); setTimeout(() => window.print(), 50); }
+const needPhoto = () => { if (S.photo) return false; alert("証明写真がまだ入っていません。「01 基本情報」の「証明写真を選ぶ」から入れてください。"); $("#photoPv").scrollIntoView({ behavior: "smooth", block: "center" }); return true; };
+function doPrint() { if (needPhoto()) return; store.set(S); renderSheet(); document.title = fileName(); setTimeout(() => window.print(), 50); }
 $("#printOld").onclick = doPrint;
 
 // ページの中でPDFファイルを直接作る（スマホやLINEの中でも使えるように）
 const loadJs = src => new Promise((ok, ng) => { if (document.querySelector('script[src="' + src + '"]')) return ok(); const s = el("script", { src }); s.onload = ok; s.onerror = ng; document.head.append(s); });
 let pdfUrl = "", pdfFile = null;
 async function makePdf() {
+  if (needPhoto()) return;
   if (!S.name.trim() && !confirm("名前がまだ空欄です。このままPDFにしますか？")) return;
   store.set(S); renderSheet();
   const box = $("#pdfBox"); box.hidden = false;
