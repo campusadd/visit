@@ -258,10 +258,17 @@ const blank = () => ({ date: today(), name: "", kana: "", gender: "", photo: "",
 let S = Object.assign(blank(), store.get() || {});
 
 // LINEの中で開いたとき：外のブラウザで開き直す案内
+// Android：Chromeを直接開く（Chromeがなければ、LINEの「外部ブラウザで開く」に任せる）
+// iPhone：Safariを直接開く（iOS 17から使える書き方）
 if (/\bLine\//i.test(navigator.userAgent)) {
   $("#lineWarn").hidden = false;
-  const u = new URL(location.href); u.searchParams.set("openExternalBrowser", "1");
-  $("#extLink").href = u.toString();
+  const u = new URL(location.href); u.searchParams.delete("openExternalBrowser");
+  const ext = new URL(u.toString()); ext.searchParams.set("openExternalBrowser", "1");
+  const rest = u.host + u.pathname + u.search;
+  let href = ext.toString();
+  if (/Android/i.test(navigator.userAgent)) href = "intent://" + rest + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(ext.toString()) + ";end";
+  else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) href = "x-safari-https://" + rest;
+  $("#extLink").href = href;
 }
 
 // ---------- 入力欄 ----------
