@@ -35,6 +35,8 @@ header.top h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.04em}
 .card h2 .n{font-family:"Josefin Sans",var(--f-body);color:#b4936a;font-size:15px}
 .hint{font-size:13px;color:var(--muted);margin:0 0 10px}
 label.f{display:block;margin:12px 0 4px;font-size:14px;font-weight:500}
+.quick{background:var(--soft);border-radius:10px;padding:10px 12px 4px;margin:8px 0 12px}
+.quick .f{margin-top:0}
 .opt{font-size:12px;color:var(--muted);font-weight:400;margin-left:6px}
 .req{font-size:11px;color:#fff;background:#d9534f;border-radius:4px;padding:1px 6px;font-weight:700;margin-left:6px}
 input[type=text],input[type=date],select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
@@ -159,6 +161,11 @@ a.btn{text-decoration:none}
     <section class="card">
       <h2><span class="n">02</span>学歴</h2>
       <p class="hint">高校から順に書きます。</p>
+      <div class="quick">
+        <label class="f" for="gradSel">かんたん入力：大学を卒業する年<span class="opt">ESには出ません</span></label>
+        <select id="gradSel"></select>
+        <p class="hint" style="margin-top:6px">選ぶと、高校・大学（4年制）の入学と卒業の年月が自動で入ります。浪人・留年などで違うときは、下で直してください。</p>
+      </div>
       <div id="eduList"></div>
       <button class="btn small" type="button" id="eduAdd">＋ 行を足す</button>
     </section>
@@ -323,6 +330,20 @@ function renderLic() {
   });
   $("#licAdd").hidden = S.lic.length >= 5;
 }
+// 卒業年から学歴の年月を入れる（ストレートの4年制大学として）
+(() => {
+  const g = $("#gradSel");
+  g.append(el("option", { value: "", textContent: "選んでください" }));
+  for (let y = NOW_Y - 1; y <= NOW_Y + 4; y++) g.append(el("option", { value: y, textContent: y + "年3月 卒業（" + String(y).slice(2) + "卒）" }));
+  g.onchange = () => {
+    const y = Number(g.value); if (!y) return;
+    if (S.edu.some(r => r.fy || r.ty) && !confirm("入っている学歴の年月を、" + y + "年3月卒業に合わせて入れ直します。学校名はそのまま残ります。よろしいですか？")) { g.value = ""; return; }
+    while (S.edu.length < 2) S.edu.push({ fy:"", fm:"4", ty:"", tm:"3", st:"卒業予定", school:"" });
+    Object.assign(S.edu[0], { fy: String(y - 7), fm: "4", ty: String(y - 4), tm: "3", st: "卒業" });
+    Object.assign(S.edu[1], { fy: String(y - 4), fm: "4", ty: String(y), tm: "3", st: y < NOW_Y || (y === NOW_Y && new Date().getMonth() >= 3) ? "卒業" : "卒業予定" });
+    g.value = ""; renderEdu(); changed();
+  };
+})();
 $("#eduAdd").onclick = () => { S.edu.push({ fy:"", fm:"4", ty:"", tm:"3", st:"卒業予定", school:"" }); renderEdu(); changed(); };
 $("#licAdd").onclick = () => { S.lic.push({ y:"", m:"", name:"" }); renderLic(); changed(); };
 
