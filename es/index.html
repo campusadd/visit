@@ -94,6 +94,8 @@ a.btn{text-decoration:none}
 #sheet .lic td{height:4.6mm}
 #sheet h3{font-size:9.5pt;font-weight:700;margin:0 0 1.6mm;display:block;background:#eaf1f9;border-left:1.2mm solid #2f6db0;border-radius:.6mm;padding:.5mm 2.5mm;letter-spacing:.06em}
 #sheet .tx{font-size:8.6pt;line-height:1.55;white-space:pre-wrap;word-break:break-all;overflow:hidden}
+#sheet .tx p{margin:0}
+#sheet .tx p+p{margin-top:.35em} /* 空けた行は、まるまる1行ではなく少しのすき間に */
 #sheet .b1{height:40mm}
 #sheet .b2{height:55mm}
 #sheet .b3{height:57mm;margin-bottom:0}
@@ -435,11 +437,12 @@ function renderSheet() {
   // 背景画像だと「背景のグラフィック」がオフの印刷で消えるので、ふつうの画像として置く
   const photo = el("div", { className: "ph" + (S.photo ? "" : " none"), textContent: S.photo ? "" : "証明写真" });
   if (S.photo) photo.append(el("img", { src: S.photo, alt: "" }));
+  const tx = text => { const d = el("div", { className: "tx" }); d._raw = text || ""; txFill(d, false); return d; };
   const sect = (title, cls, text, pic, cap) => el("div", { className: "box " + cls }, [el("h3", { textContent: title }),
     pic // キャプションは写真があるときだけ出す
-      ? el("div", { className: "bx" }, [el("div", { className: "tx", textContent: text || "" }),
+      ? el("div", { className: "bx" }, [tx(text),
           el("div", { className: "pic" }, [el("img", { src: pic, alt: "" }), cap ? el("div", { className: "cap", textContent: cap }) : null])])
-      : el("div", { className: "tx", textContent: text || "" })]);
+      : tx(text)]);
   sh.replaceChildren(
     el("div", { className: "hd" }, [el("img", { src: "campus-add-logo.png", alt: "Campus Add" }),
       el("div", { className: "ttl" }, [el("b", { textContent: "エントリーシート" }), el("small", { textContent: "ENTRY SHEET" })]),
@@ -461,12 +464,57 @@ function renderSheet() {
   );
   fitAll(); scale();
 }
-// 枠に入らないときは字を小さくする（6.5ptまで）
+// ---------- 枠に収める（学生に直してもらわず、ツールの側で収める） ----------
+// ① そのまま入れば、いつもの大きさのまま
+// ② 入らなければ、「学業・ゼミ・研究」「自己PR」「学生時代に力を入れたこと」の3つの枠の高さを、中身に合わせて配り直す（A4 1枚のまま）
+// ③ それでも入らなければ、3つそろえて字を小さくする（6.5ptまで）
+// ④ それでも入らなければ、行数の多い欄から改行を詰めてつなげる（文字は1字も消さない）
+const MM = 96 / 25.4, FMAX = 8.6, FMIN = 6.5;
+const BIG = [["b1", 31], ["b2", 46], ["b3", 48]]; // 枠の名前と、いつもの文章の高さ（mm）
+// 文章を入れる。空けた行（改行2つ以上）で段落に分ける。join のときは改行を詰めて1つにつなげる
+function txFill(t, join) {
+  const raw = String(t._raw || "").replace(/\r/g, "").replace(/^\s*\n+|\s+$/g, "");
+  const parts = join ? [raw.replace(/[ \t　]*\n\s*/g, "")] : raw.split(/\n[ \t　]*\n\s*/);
+  t.replaceChildren(...parts.map(p => el("p", { textContent: p })));
+}
+const over = t => t.scrollHeight > t.clientHeight + 1;
+// 趣味・特技（枠の大きさは変えない）：字を小さく→それでも入らなければ改行を詰める
+function fitOne(t) {
+  for (const join of [false, true]) {
+    txFill(t, join);
+    let size = FMAX; t.style.fontSize = size + "pt";
+    while (over(t) && size > FMIN) { size -= 0.2; t.style.fontSize = size.toFixed(1) + "pt"; }
+    if (!over(t)) return;
+  }
+}
 function fitAll() {
-  document.querySelectorAll("#sheet .tx").forEach(t => {
-    let size = 8.6; t.style.fontSize = size + "pt";
-    while (t.scrollHeight > t.clientHeight + 1 && size > 6.5) { size -= 0.2; t.style.fontSize = size.toFixed(1) + "pt"; }
-  });
+  const sh = $("#sheet"); if (!sh) return;
+  const hb = sh.querySelector(".hb .tx"); if (hb) fitOne(hb);
+  const secs = BIG.map(([c, def]) => { const box = sh.querySelector("." + c); return box && { box, t: box.querySelector(".tx"), def, pic: box.querySelector(".pic"), join: false }; }).filter(Boolean);
+  if (!secs.length) return;
+  const defSum = secs.reduce((a, x) => a + x.def, 0), total = defSum * MM;
+  const setH = (x, px) => { x.t.style.height = px + "px"; x.box.style.height = (px + 9 * MM) + "px"; };
+  const size = f => secs.forEach(x => { x.t.style.fontSize = f.toFixed(1) + "pt"; });
+  // ① いつもの大きさ
+  size(FMAX); secs.forEach(x => { txFill(x.t, false); setH(x, x.def * MM); });
+  if (!secs.some(x => over(x.t))) return;
+  // 中身に必要な高さ（写真がある欄は写真の高さより低くしない）
+  const need = x => { x.t.style.height = "auto"; return Math.max(x.t.scrollHeight, x.pic ? x.pic.offsetHeight : 12 * MM) + 2 * MM; }; // 下に2mmの余白
+  for (;;) {
+    // ②③ 大きい字から順に、3つの枠に配り直して入るか試す
+    for (let f = FMAX; f >= FMIN - 0.01; f -= 0.2) {
+      size(f);
+      const needs = secs.map(need), sum = needs.reduce((a, b) => a + b, 0);
+      if (sum <= total) { const spare = total - sum; secs.forEach((x, i) => setH(x, needs[i] + spare * x.def / defSum)); return; }
+    }
+    // ④ まだ詰めていない欄のうち、いちばん長い欄の改行を詰める
+    const cand = secs.filter(x => !x.join && /\n/.test(String(x.t._raw || "").trim()));
+    if (!cand.length) break;
+    const x = cand.sort((a, b) => need(b) - need(a))[0];
+    x.join = true; txFill(x.t, true);
+  }
+  // ここまで来るのは、文字数が目安よりかなり多いときだけ：いつもの枠で、それぞれ入るところまで字を小さくする
+  secs.forEach(x => { setH(x, x.def * MM); let f = FMAX; x.t.style.fontSize = f + "pt"; while (over(x.t) && f > FMIN) { f -= 0.2; x.t.style.fontSize = f.toFixed(1) + "pt"; } });
 }
 function scale() {
   const wrap = $("#pvwrap"), sh = $("#sheet");
